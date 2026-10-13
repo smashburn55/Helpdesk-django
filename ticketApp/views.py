@@ -6,33 +6,36 @@ from .models import Ticket, TicketStatus, Comment, ContactCRM
 from .forms import TicketForm, CommentForm, StatusUpdateForm, QuickContactForm
 
 
+@login_required
 def index(request):
-    tickets = Ticket.objects.all().order_by('-created_at')
+    # Start with all tickets pulling down from Postgres
+    tickets = Ticket.objects.all().order_by('-created_at').select_related('crm_contact', 'crm_contact__company', 'assignee')
 
-    # Extract filter tokens from the URL string parameters
+    # Extract filter tokens from request parameters
     search_query = request.GET.get('search', '')
     status_filter = request.GET.get('status', '')
-    sla_filter = request.GET.get('sla', '')
+    view_scope = request.GET.get('scope', 'all')  # Options: 'all' or 'mine'
 
-    # Dynamically filter database rows based on match keys
+    # Filter by Keyword
     if search_query:
         tickets = tickets.filter(
-            Q(title__icontains=search_query) |
-            Q(description__icontains=search_query)
+            Q(title__icontains=search_query) | Q(description__icontains=search_query)
         )
+    # Filter by Status
     if status_filter:
         tickets = tickets.filter(status=status_filter)
-    if sla_filter:
-        pass
+
+    # Filter by Assigned Technician (Scope)
+    if view_scope == 'mine':
+        tickets = tickets.filter(assignee=request.user)
 
     context = {
         'tickets': tickets,
         'search_query': search_query,
         'status_filter': status_filter,
-        'sla_filter': sla_filter,
+        'view_scope': view_scope,
     }
     return render(request, 'ticketApp/index.html', context)
-
 
 @login_required
 @login_required

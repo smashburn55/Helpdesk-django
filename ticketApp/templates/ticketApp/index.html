@@ -1,69 +1,94 @@
 {% extends 'ticketApp/base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Active Projects & Support Tickets</h2>
-</div>
-<!-- Paste this search bar interface directly above your ticket card loop rows -->
-<div class="card shadow-sm border-0 p-3 mb-4 bg-white">
-    <form method="GET" class="row g-2 align-items-end">
-        <div class="col-md-4">
-            <label class="form-label small fw-bold text-muted">Keyword Lookup</label>
-            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search ticket details..." value="{{ search_query }}">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">Filter by Progress</label>
-            <select name="status" class="form-select form-select-sm">
-                <option value="">-- All Statuses --</option>
-                <option value="TODO" {% if status_filter == 'TODO' %}selected{% endif %}>To Do</option>
-                <option value="PROG" {% if status_filter == 'PROG' %}selected{% endif %}>In Progress</option>
-                <option value="REV" {% if status_filter == 'REV' %}selected{% endif %}>In Review</option>
-                <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Done</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">Contract Protection Tier</label>
-            <select name="sla" class="form-select form-select-sm">
-                <option value="">-- All Accounts --</option>
-                <option value="PREM" {% if sla_filter == 'PREM' %}selected{% endif %}>Premium Contract Only</option>
-                <option value="STND" {% if sla_filter == 'STND' %}selected{% endif %}>Standard Contract Only</option>
-                <option value="BASIC" {% if sla_filter == 'BASIC' %}selected{% endif %}>Basic Accounts Only</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-    <div class="d-flex gap-1">
-        <button type="submit" class="btn btn-primary btn-sm w-100">Apply</button>
-
-        <!-- This clear anchor link drops all URL arguments and reloads a completely fresh view -->
-        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm w-100">Clear</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="fw-bold text-dark">Service Ticket Registry Desk</h2>
+    <div class="btn-group" role="group">
+        <!-- Scope Toggle Filter Buttons -->
+        <a href="?scope=all&status={{ status_filter }}&search={{ search_query }}" class="btn btn-sm {% if view_scope == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">All Incidents Queue</a>
+        <a href="?scope=mine&status={{ status_filter }}&search={{ search_query }}" class="btn btn-sm {% if view_scope == 'mine' %}btn-dark{% else %}btn-outline-dark{% endif %}">🎯 My Assigned Tickets</a>
     </div>
 </div>
+
+<!-- Search & Filter Controls Ribbon -->
+<div class="card shadow-sm border-0 p-3 mb-3 bg-white">
+    <form method="GET" class="row g-2 align-items-end">
+        <input type="hidden" name="scope" value="{{ view_scope }}">
+        <div class="col-md-5">
+            <label class="form-label small fw-bold text-muted">Keyword Matrix</label>
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search title or payload contents..." value="{{ search_query }}">
+        </div>
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-muted">Status State</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">-- All Progress States --</option>
+                <option value="TODO" {% if status_filter == 'TODO' %}selected{% endif %}>To Do / New</option>
+                <option value="PROG" {% if status_filter == 'PROG' %}selected{% endif %}>In Progress</option>
+                <option value="REV" {% if status_filter == 'REV' %}selected{% endif %}>In Review</option>
+                <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Closed / Done</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <div class="d-flex gap-1">
+                <button type="submit" class="btn btn-primary btn-sm w-100">Apply Filters</button>
+                <a href="?scope={{ view_scope }}" class="btn btn-outline-secondary btn-sm w-100">Clear</a>
+            </div>
+        </div>
     </form>
 </div>
 
-<div class="row">
-    {% for ticket in tickets %}
-    <div class="col-md-4 mb-3">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body">
-               <h5 class="card-title">
-                <a href="{% url 'ticket_by_id' ticket.ticket_id %}" class="text-decoration-none text-dark">
-                #{{ ticket.ticket.id }}: {{ ticket.title }}
-                </a>
-                </h5>
-                <p class="card-text text-muted">{{ ticket.description|truncatewords:15 }}</p>
-                <span class="badge {% if ticket.status == 'DONE' %}bg-success{% elif ticket.status == 'PROG' %}bg-warning{% else %}bg-secondary{% endif %}">
-                    {{ ticket.get_status_display }}
-                </span>
-            </div>
-            <div class="card-footer bg-transparent text-end">
-                <small class="text-muted">Assignee: {{ ticket.assignee|default:"Unassigned" }}</small>
-            </div>
-        </div>
+<!-- High-Density Data Grid -->
+<div class="card shadow-sm border-0 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 bg-white" style="font-size: 0.9rem;">
+            <thead class="table-light text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">
+                <tr>
+                    <th class="ps-3" style="width: 80px;">ID</th>
+                    <th>Ticket Summary Topic</th>
+                    <th>Company Entity</th>
+                    <th>Reporting Caller</th>
+                    <th>Assigned Agent</th>
+                    <th>Status State</th>
+                    <th class="text-end pe-3" style="width: 120px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td class="ps-3 fw-bold text-secondary">#{{ ticket.ticket_id }}</td>
+                    <td>
+                        <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">{{ ticket.title }}</div>
+                        <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ ticket.description }}</small>
+                    </td>
+                    <td><span class="fw-semibold text-secondary">{{ ticket.company.company_name|default:"Independent" }}</span></td>
+                    <td>
+                        <div class="fw-bold" style="font-size: 0.85rem;">{{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</div>
+                        <small class="text-muted text-lowercase" style="font-size: 0.75rem;">{{ ticket.crm_contact.email }}</small>
+                    </td>
+                    <td>
+                        {% if ticket.assignee %}
+                            <span class="badge bg-light text-dark border border-secondary py-1 px-2"><i class="bi bi-person"></i> {{ ticket.assignee.username }}</span>
+                        {% else %}
+                            <span class="text-danger fw-bold italic small">⚠️ Unassigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if ticket.status == 'DONE' %}bg-success{% elif ticket.status == 'PROG' %}bg-warning text-dark{% elif ticket.status == 'REV' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                            {{ ticket.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="text-end pe-3">
+                        <a href="{% url 'ticket_by_id' ticket.ticket_id %}" class="btn btn-outline-primary btn-sm px-2 py-1" style="font-size: 0.8rem;">Manage &rarr;</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted italic">
+                        No open support instances found matching the current grid constraints ribbon.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-    {% empty %}
-    <div class="col-100 text-center">
-        <p class="alert alert-info">No tickets filed yet.</p>
-    </div>
-    {% endfor %}
 </div>
 {% endblock %}
