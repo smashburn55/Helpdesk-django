@@ -1,24 +1,17 @@
 {% extends 'ticketApp/base.html' %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-dark">Service Ticket Registry Desk</h2>
-    <div class="btn-group" role="group">
-        <!-- Scope Toggle Filter Buttons -->
-        <a href="?scope=all&status={{ status_filter }}&search={{ search_query }}" class="btn btn-sm {% if view_scope == 'all' %}btn-dark{% else %}btn-outline-dark{% endif %}">All Incidents Queue</a>
-        <a href="?scope=mine&status={{ status_filter }}&search={{ search_query }}" class="btn btn-sm {% if view_scope == 'mine' %}btn-dark{% else %}btn-outline-dark{% endif %}">🎯 My Assigned Tickets</a>
-    </div>
-</div>
 
-<!-- Search & Filter Controls Ribbon -->
+
+<!-- Search & Data Grid Filter Ribbon -->
 <div class="card shadow-sm border-0 p-3 mb-3 bg-white">
     <form method="GET" class="row g-2 align-items-end">
         <input type="hidden" name="scope" value="{{ view_scope }}">
         <div class="col-md-5">
-            <label class="form-label small fw-bold text-muted">Keyword Matrix</label>
+            <label class="form-label small fw-bold text-muted">Keyword Matrix Lookup</label>
             <input type="text" name="search" class="form-control form-control-sm" placeholder="Search title or payload contents..." value="{{ search_query }}">
         </div>
         <div class="col-md-4">
-            <label class="form-label small fw-bold text-muted">Status State</label>
+            <label class="form-label small fw-bold text-muted">Progress State Filter</label>
             <select name="status" class="form-select form-select-sm">
                 <option value="">-- All Progress States --</option>
                 <option value="TODO" {% if status_filter == 'TODO' %}selected{% endif %}>To Do / New</option>
@@ -36,7 +29,7 @@
     </form>
 </div>
 
-<!-- High-Density Data Grid -->
+<!-- Commercial High-Density Data Grid Registry Table -->
 <div class="card shadow-sm border-0 overflow-hidden">
     <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 bg-white" style="font-size: 0.9rem;">
@@ -47,6 +40,7 @@
                     <th>Company Entity</th>
                     <th>Reporting Caller</th>
                     <th>Assigned Agent</th>
+                    <th>SLA Protection</th>
                     <th>Status State</th>
                     <th class="text-end pe-3" style="width: 120px;">Actions</th>
                 </tr>
@@ -54,6 +48,7 @@
             <tbody>
                 {% for ticket in tickets %}
                 <tr>
+                    <!-- Custom Postgres Primary Key Mapping -->
                     <td class="ps-3 fw-bold text-secondary">#{{ ticket.ticket_id }}</td>
                     <td>
                         <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">{{ ticket.title }}</div>
@@ -66,10 +61,16 @@
                     </td>
                     <td>
                         {% if ticket.assignee %}
-                            <span class="badge bg-light text-dark border border-secondary py-1 px-2"><i class="bi bi-person"></i> {{ ticket.assignee.username }}</span>
+                            <span class="badge bg-light text-dark border border-secondary py-1 px-2">{{ ticket.assignee.username }}</span>
                         {% else %}
                             <span class="text-danger fw-bold italic small">⚠️ Unassigned</span>
                         {% endif %}
+                    </td>
+                    <td>
+                        <!-- Dynamic Server-Side Calculated SLA Timing Badges -->
+                        <span class="{{ ticket.sla_status_data.class }}" style="font-size: 0.8rem; font-weight: 700;">
+                            {{ ticket.sla_status_data.label }}
+                        </span>
                     </td>
                     <td>
                         <span class="badge {% if ticket.status == 'DONE' %}bg-success{% elif ticket.status == 'PROG' %}bg-warning text-dark{% elif ticket.status == 'REV' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
@@ -82,7 +83,7 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center py-4 text-muted italic">
+                    <td colspan="8" class="text-center py-4 text-muted italic">
                         No open support instances found matching the current grid constraints ribbon.
                     </td>
                 </tr>

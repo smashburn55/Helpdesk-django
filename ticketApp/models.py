@@ -93,6 +93,8 @@ class Ticket(models.Model):
 
 
 
+
+
 class Comment(models.Model):
     # REMOVED the old tracking key and updated to match your live custom Postgres key
     ticket = models.ForeignKey(

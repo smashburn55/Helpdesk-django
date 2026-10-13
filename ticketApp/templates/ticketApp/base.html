@@ -1,40 +1,86 @@
+{% load static %}  <!-- 1. CRITICAL: This must be the very first line of the file -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Support Ticket Desk</title>
+    <title>MDS Ticket Pro Desk</title>
+
     <style>
         {% include "ticketApp/bootstrap_styles.html" %}
     </style>
+
 </head>
 <body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">🎫 Support Portal</a>
-            <div>
+
+    <!-- ==================== BRANDED HEADER RIBBON ==================== -->
+    <div class="container-fluid p-0 bg-white border-bottom shadow-sm mb-4">
+        <!-- Main 3-Column Layout Matrix -->
+        <div class="row align-items-center m-0 px-3 py-2" style="min-height: 90px;">
+
+
+            <div class="col-md-3 d-flex align-items-center justify-content-start ps-2">
+                <a href="{% url 'index' %}" class="d-inline-block">
+                    <!-- Dynamically loads your native local logo asset file -->
+                    <img src="{% static 'ticketApp/images/logo.png' %}" alt="MDS Logo" style="height: 55px; width: auto; object-fit: contain;">
+                </a>
+            </div>
+
+            <!-- COLUMN 2: CENTER ALIGNED - Centered Branded Title Banner -->
+            <div class="col-md-6 d-flex align-items-center justify-content-center">
+                <div class="w-100 text-center rounded d-flex align-items-center justify-content-center"
+                     style="background: linear-gradient(90deg, #bfe3f7 0%, #e9ecef 100%); min-height: 70px; max-width: 650px;">
+                    <h1 class="mb-0 fw-bold tracking-wide" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 2.4rem; color: #1a252f; letter-spacing: 1px;">
+                        Ticket <span class="text-primary fw-light">Pro</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- COLUMN 3: RIGHT ALIGNED - Compact Multi-User Control & Shortcut Panel -->
+            <div class="col-md-3 d-flex align-items-center justify-content-end gap-1 pe-2">
                 {% if user.is_authenticated %}
-                    <span class="text-white me-3">Hello, {{ user.username }}</span>
-                    <a href="{% url 'create_ticket' %}" class="btn btn-primary btn-sm">New Ticket</a>
-                <a href="{% url 'caller_intake' %}" class="btn btn-outline-info btn-sm me-auto">📞 Phone Intake Desk</a>
-                <!-- Inside the navbar right beside your Phone Intake navigation link -->
-                {% if user.is_staff %}
-                    <a href="{% url 'helpdesk_analytics' %}" class="btn btn-outline-warning btn-sm me-2">📈 Team Analytics</a>
-                {% endif %}
+                    <!-- Real-Time Notification Bell Dropdown Badge -->
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-xs btn-outline-dark position-relative py-1 px-2 border-secondary shadow-none" type="button" data-bs-toggle="dropdown" style="font-size: 0.75rem;">
+                            🔔 {% if total_bell_count > 0 %}<span class="badge bg-danger rounded-pill px-1" style="font-size: 0.65rem;">{{ total_bell_count }}</span>{% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 mt-2" style="width: 260px; font-size: 0.8rem;">
+                            <li class="dropdown-header text-uppercase fw-bold text-dark border-bottom pb-1 mb-2">Live Compliance</li>
+                            <li class="p-1 d-flex justify-content-between"><span>SLA Critical</span><span class="badge {% if sla_breaches_count > 0 %}bg-danger{% else %}bg-light text-muted{% endif %}">{{ sla_breaches_count }} Overdue</span></li>
+                            <li class="p-1 d-flex justify-content-between border-top mt-1 pt-2"><span>Internal Notices</span><span class="badge {% if unread_alerts_count > 0 %}bg-warning text-dark{% else %}bg-light text-muted{% endif %}">{{ unread_alerts_count }} New</span></li>
+                        </ul>
+                    </div>
 
+                    <!-- Shrunken Compact Action Shortcuts -->
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm py-1 px-2 border-secondary" style="font-size: 0.75rem; font-weight: 600;" title="View Ticket Registry Grid">Grid</a>
+                    <a href="{% url 'caller_intake' %}" class="btn btn-outline-info btn-sm py-1 px-2 text-dark border-secondary" style="font-size: 0.75rem; font-weight: 600;" title="Phone Intake Desk">Intake</a>
+                    {% if user.is_staff %}
+                        <a href="{% url 'helpdesk_analytics' %}" class="btn btn-outline-warning btn-sm py-1 px-2 text-dark border-secondary" style="font-size: 0.75rem; font-weight: 600;" title="Operational Metrics Dashboard">Metrics</a>
+                    {% endif %}
 
+                    <!-- Tiny User Badge indicator -->
+                    <span class="badge bg-dark border border-secondary text-white py-1 px-2 ms-1 font-monospace" style="font-size: 0.7rem; font-weight: 500;">
+                        Tech: {{ user.username }}
+                    </span>
                 {% else %}
-                    <a href="/admin/login/" class="btn btn-outline-light btn-sm">Staff Login</a>
+                    <a href="/admin/login/" class="btn btn-primary btn-sm py-1 px-2" style="font-size: 0.75rem;">Staff Login &rarr;</a>
                 {% endif %}
             </div>
+
         </div>
-    </nav>
-    <div class="container">
+    </div>
+    <!-- ==================== END HEADER RIBBON ==================== -->
+
+    <!-- Core Dynamic Application Workspace Page Block Container -->
+    <div class="container-fluid px-4">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-success">{{ message }}</div>
+                <div class="alert alert-success shadow-sm border-0 py-2 small mb-3">{{ message }}</div>
             {% endfor %}
         {% endif %}
+
         {% block content %}{% endblock %}
     </div>
+
 </body>
 </html>
+
