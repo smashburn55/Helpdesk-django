@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Support Ticket Desk</title>
-    <!-- Bootstrap v6.0.0-alpha.1 Minified CSS -->
-    <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@6.0.0-alpha.1/dist/css/bootstrap.min.css" integrity="sha384-BJf/nQgxZJU68GxBse97Vdlc8Rh+z9PzzXiS3/BjV+1nQPR7IKn+iJnD3DJvCMaU" crossorigin="anonymous">-->
     <style>
         {% include "ticketApp/bootstrap_styles.html" %}
     </style>
@@ -18,6 +16,11 @@
                     <span class="text-white me-3">Hello, {{ user.username }}</span>
                     <a href="{% url 'create_ticket' %}" class="btn btn-primary btn-sm">New Ticket</a>
                 <a href="{% url 'caller_intake' %}" class="btn btn-outline-info btn-sm me-auto">📞 Phone Intake Desk</a>
+                <!-- Inside the navbar right beside your Phone Intake navigation link -->
+                {% if user.is_staff %}
+                    <a href="{% url 'helpdesk_analytics' %}" class="btn btn-outline-warning btn-sm me-2">📈 Team Analytics</a>
+                {% endif %}
+
 
                 {% else %}
                     <a href="/admin/login/" class="btn btn-outline-light btn-sm">Staff Login</a>

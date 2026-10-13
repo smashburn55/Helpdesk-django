@@ -94,9 +94,11 @@ class Ticket(models.Model):
 
 
 class Comment(models.Model):
+    # REMOVED the old tracking key and updated to match your live custom Postgres key
     ticket = models.ForeignKey(
         Ticket,
         on_delete=models.CASCADE,
+        db_column='ticket_id',     # <-- CRITICAL: Forces it to link to your live table column name
         related_name='comments'
     )
     author = models.ForeignKey(
@@ -108,8 +110,7 @@ class Comment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Comment by {self.author.username} on {self.ticket.title}"
-
+        return f"Comment by {self.author.username} on ticket #{self.ticket_id}"
 
 
 

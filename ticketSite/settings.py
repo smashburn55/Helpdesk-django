@@ -31,16 +31,18 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    "ticketApp",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
+    "ticketApp",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -130,3 +132,35 @@ MAILERS = {
         "BACKEND": "django.core.mail.backends.console.EmailBackend",
     },
 }
+
+# --- COMMERCIAL CORS SAFE AUTHORIZATION RULES ---
+
+# During local testing, this allows your web form to communicate seamlessly
+CORS_ALLOW_ALL_ORIGINS = True
+
+# When you deploy your software to production, change the variable to this to stay secure:
+# CORS_ALLOWED_ORIGINS = [
+#     "https://mashburndatasystems.com",
+#     "https://mashburndatasystems.com",
+# ]
+
+# --- GREENGEEKS PRODUCTION SMTP EMAIL ROUTING ---
+# --- MODERN DJANGO 6.1+ GREENGEEKS PRODUCTION EMAIL CONFIGURATION ---
+
+MAILERS = {
+    "default": {
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": "://mashburndatasystems.com",
+            "port": 465,
+            "use_ssl": True,
+            "username": "support@mashburndatasystems.com",
+            "password": "Tinman55!",
+        },
+    },
+}
+
+# This setting remains outside the dictionary to handle branding defaults
+DEFAULT_FROM_EMAIL = "Mashburn Data Support <support@mashburndatasystems.com>"
+
+

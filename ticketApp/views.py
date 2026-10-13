@@ -54,6 +54,8 @@ def create_ticket(request):
                 ticket.company = ticket.crm_contact.company
 
             ticket.save()
+            # TRIGGER AUTO-RESPONDER OUTBOUND packet
+            send_ticket_confirmation_email(ticket)
             messages.success(request, 'Support ticket written directly to CRM database!')
             return redirect('index')
     else:
@@ -153,3 +155,137 @@ def quick_add_contact(request):
     else:
         form = QuickContactForm()
     return render(request, 'ticketApp/quick_add_contact.html', {'form': form})
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt  # Allows secure cross-origin submissions from your main marketing site
+def web_intake_api(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only secure POST execution pipelines allowed.'}, status=405)
+
+    try:
+        # Parse the incoming JSON payload submitted from mashburndatasystems.com
+        data = json.loads(request.body)
+        email_address = data.get('email', '').strip().lower()
+        title = data.get('title', '').strip()
+        description = data.get('description', '').strip()
+        system_details = data.get('system_details', '').strip() # e.g. OS, App Version
+
+        if not email_address or not title or not description:
+            return JsonResponse({'error': 'Missing mandatory tracking parameters.'}, status=400)
+
+        # 1. Query PostgreSQL CRM Contacts Table for Sender Matching
+        matching_contact = ContactCRM.objects.filter(email__iexact=email_address).first()
+
+        if not matching_contact:
+            # Fallback: Auto-generate an external contact record if unknown
+            parsed_name = email_address.split('@')[0]
+            matching_contact = ContactCRM.objects.create(
+                first_name=parsed_name,
+                last_name="Web Form Submitter",
+                email=email_address
+            )
+
+        # Append any technical environment details straight to the description layout payload
+        full_description = f"{description}\n\n---\nTechnical Environment Details:\n{system_details}"
+
+        # 2. Write Ticket Directly into Live Production Grid Row
+        new_ticket = Ticket.objects.create(
+            title=title[:200],
+            description=full_description,
+            status='TODO',
+            crm_contact=matching_contact,
+            company=matching_contact.company if matching_contact.company else None
+        )
+        # TRIGGER AUTO-RESPONDER OUTBOUND packet
+        send_ticket_confirmation_email(new_ticket)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'Ticket #{new_ticket.ticket_id} logged into production grid successfully.'
+        }, status=201)
+
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON request structural framing.'}, status=400)
+
+
+from django.core.mail import send_mail
+from django.conf import settings
+
+
+def send_ticket_confirmation_email(ticket):
+    """
+    Automated transactional assistant that pulls a customer's email from
+    PostgreSQL and fires a branded HTML tracker message immediately.
+    """
+    if not ticket.crm_contact or not ticket.crm_contact.email:
+        return  # Abort safely if caller has no email recorded in CRM
+
+    customer_email = ticket.crm_contact.email
+    customer_name = f"{ticket.crm_contact.first_name} {ticket.crm_contact.last_name}"
+
+    subject = f"[Ticket #{ticket.ticket_id}] Support Request Received: {ticket.title}"
+
+    # Professional plain-text fallback content
+    message_body = (
+        f"Hi {ticket.crm_contact.first_name},\n\n"
+        f"Your support request has been successfully logged directly into our system.\n\n"
+        f"--- Ticket Details ---\n"
+        f"Ticket Tracking ID: #{ticket.ticket_id}\n"
+        f"Issue Topic: {ticket.title}\n"
+        f"Current Status: New / To Do\n\n"
+        f"A support technician has been notified and is reviewing your case file. "
+        f"You can reply directly to this email if you need to provide extra information.\n\n"
+        f"Best regards,\n"
+        f"The Mashburn Data Systems IT Helpdesk Team"
+    )
+
+    try:
+        send_mail(
+            subject=subject,
+            message=message_body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[customer_email],
+            fail_silently=False,  # Triggers terminal errors during local debugging if port blocks occur
+        )
+        print(f"CONFIRMATION EMAIL SENT SUCCESSFULLY TO: {customer_email}")
+    except Exception as e:
+        print(f"SMTP DELIVERY EXCEPTION ERROR: {str(e)}")
+
+from django.db.models import Count
+from django.contrib.auth.models import User
+from .models import Ticket
+
+@login_required
+def helpdesk_analytics(request):
+    # Ensure only staff or managers can view team metrics
+    if not request.user.is_staff:
+        messages.error(request, "Access denied. Manager clearance required.")
+        return redirect('index')
+
+    # 1. Calculate critical queue volumes
+    total_tickets = Ticket.objects.count()
+    unassigned_count = Ticket.objects.filter(assignee__isnull=True).count()
+
+    # 2. Extract Status Metrics distribution
+    status_counts = Ticket.objects.values('status').annotate(total=Count('ticket_id'))
+    status_dict = {'TODO': 0, 'PROG': 0, 'REV': 0, 'DONE': 0}
+    for item in status_counts:
+        status_dict[item['status']] = item['total']
+
+    # 3. Aggregate individual technician workloads across the team
+    # This runs a live group-by query joining your techs to their active ticket counts
+    tech_workloads = User.objects.annotate(
+        active_tickets=Count('tickets', filter=Q(tickets__status='DONE'))
+    ).filter(active_tickets__gt=0).order_by('-active_tickets')
+
+    context = {
+        'total_tickets': total_tickets,
+        'unassigned_count': unassigned_count,
+        'status': status_dict,
+        'tech_workloads': tech_workloads,
+    }
+    return render(request, 'ticketApp/analytics.html', context)
+

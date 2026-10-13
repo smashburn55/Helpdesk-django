@@ -1,0 +1,86 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<h2 class="fw-bold text-dark mb-4">Helpdesk Operational Performance Desk</h2>
+
+<!-- Top Summary Metric Cards Ribbon -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-primary text-white p-3 text-center">
+            <h6 class="text-uppercase small fw-bold mb-1 opacity-75">All Lifetime Cases</h6>
+            <h2 class="fw-bold mb-0">{{ total_tickets }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-danger text-white p-3 text-center">
+            <h6 class="text-uppercase small fw-bold mb-1 opacity-75">Unassigned Backlog</h6>
+            <h2 class="fw-bold mb-0">{{ unassigned_count }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-warning text-dark p-3 text-center">
+            <h6 class="text-uppercase small fw-bold mb-1 opacity-75">Active Processing</h6>
+            <h2 class="fw-bold mb-0">{{ status.PROG }}</h2>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm border-0 bg-success text-white p-3 text-center">
+            <h6 class="text-uppercase small fw-bold mb-1 opacity-75">Closed Resolution Metric</h6>
+            <h2 class="fw-bold mb-0">{{ status.DONE }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Left Side Panel: Team Workload Ledger -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100 bg-white">
+            <div class="card-header bg-dark text-white py-3"><h5 class="mb-0 fw-bold small text-uppercase tracking-wider">Active Agent Load Metrics</h5></div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for tech in tech_workloads %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <strong class="text-dark">{{ tech.username }}</strong>
+                                <small class="text-muted d-block">{{ tech.email }}</small>
+                            </div>
+                            <!-- Dynamic progress weight bar -->
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="badge bg-primary rounded-pill px-3">{{ tech.active_tickets }} Open</span>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="p-4 text-center text-muted italic">All agent workloads are clear.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side Panel: Queue Breakdown Tracking -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 h-100 bg-white p-4">
+            <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">Queue Status Breakdown</h5>
+
+            <label class="small fw-bold text-muted d-block mb-1">New / To Do Queue</label>
+            <div class="progress mb-3" style="height: 20px;">
+                <div class="progress-bar bg-secondary" role="progressbar" style="width: {% if total_tickets %}{{ status.TODO }}0%{% else %}0%{% endif %}">{{ status.TODO }}</div>
+            </div>
+
+            <label class="small fw-bold text-muted d-block mb-1">In Progress / Active</label>
+            <div class="progress mb-3" style="height: 20px;">
+                <div class="progress-bar bg-warning text-dark" role="progressbar" style="width: {% if total_tickets %}{{ status.PROG }}0%{% else %}0%{% endif %}">{{ status.PROG }}</div>
+            </div>
+
+            <label class="small fw-bold text-muted d-block mb-1">In Review / Testing</label>
+            <div class="progress mb-3" style="height: 20px;">
+                <div class="progress-bar bg-info text-dark" role="progressbar" style="width: {% if total_tickets %}{{ status.REV }}0%{% else %}0%{% endif %}">{{ status.REV }}</div>
+            </div>
+
+            <label class="small fw-bold text-muted d-block mb-1">Closed / Resolved</label>
+            <div class="progress mb-3" style="height: 20px;">
+                <div class="progress-bar bg-success" role="progressbar" style="width: {% if total_tickets %}{{ status.DONE }}0%{% else %}0%{% endif %}">{{ status.DONE }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
