@@ -1,0 +1,69 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Active Projects & Support Tickets</h2>
+</div>
+<!-- Paste this search bar interface directly above your ticket card loop rows -->
+<div class="card shadow-sm border-0 p-3 mb-4 bg-white">
+    <form method="GET" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-muted">Keyword Lookup</label>
+            <input type="text" name="search" class="form-control form-control-sm" placeholder="Search ticket details..." value="{{ search_query }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted">Filter by Progress</label>
+            <select name="status" class="form-select form-select-sm">
+                <option value="">-- All Statuses --</option>
+                <option value="TODO" {% if status_filter == 'TODO' %}selected{% endif %}>To Do</option>
+                <option value="PROG" {% if status_filter == 'PROG' %}selected{% endif %}>In Progress</option>
+                <option value="REV" {% if status_filter == 'REV' %}selected{% endif %}>In Review</option>
+                <option value="DONE" {% if status_filter == 'DONE' %}selected{% endif %}>Done</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted">Contract Protection Tier</label>
+            <select name="sla" class="form-select form-select-sm">
+                <option value="">-- All Accounts --</option>
+                <option value="PREM" {% if sla_filter == 'PREM' %}selected{% endif %}>Premium Contract Only</option>
+                <option value="STND" {% if sla_filter == 'STND' %}selected{% endif %}>Standard Contract Only</option>
+                <option value="BASIC" {% if sla_filter == 'BASIC' %}selected{% endif %}>Basic Accounts Only</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+    <div class="d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm w-100">Apply</button>
+
+        <!-- This clear anchor link drops all URL arguments and reloads a completely fresh view -->
+        <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm w-100">Clear</a>
+    </div>
+</div>
+    </form>
+</div>
+
+<div class="row">
+    {% for ticket in tickets %}
+    <div class="col-md-4 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+               <h5 class="card-title">
+                <a href="{% url 'ticket_by_id' ticket.ticket_id %}" class="text-decoration-none text-dark">
+                #{{ ticket.ticket.id }}: {{ ticket.title }}
+                </a>
+                </h5>
+                <p class="card-text text-muted">{{ ticket.description|truncatewords:15 }}</p>
+                <span class="badge {% if ticket.status == 'DONE' %}bg-success{% elif ticket.status == 'PROG' %}bg-warning{% else %}bg-secondary{% endif %}">
+                    {{ ticket.get_status_display }}
+                </span>
+            </div>
+            <div class="card-footer bg-transparent text-end">
+                <small class="text-muted">Assignee: {{ ticket.assignee|default:"Unassigned" }}</small>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-100 text-center">
+        <p class="alert alert-info">No tickets filed yet.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

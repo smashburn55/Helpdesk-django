@@ -1,0 +1,14 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<div class="card shadow mx-auto" style="max-width: 500px;">
+    <div class="card-header bg-dark text-white"><h4>Register New Customer Contact</h4></div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary w-100 mt-3">Save Contact to CRM</button>
+        </form>
+        <a href="{% url 'caller_intake' %}" class="btn btn-link w-100 text-secondary mt-2 text-decoration-none small">&larr; Back to Intake Desk</a>
+    </div>
+</div>
+{% endblock %}

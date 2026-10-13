@@ -1,0 +1,97 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<div class="row">
+    <!-- Left Column: Ticket Status Registry Control Panel -->
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white"><h6 class="mb-0">Ticket Properties</h6></div>
+            <div class="card-body">
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">Current Status</label>
+                        {{ status_form.status }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">Assigned Staff Agent</label>
+                        {{ status_form.assignee }}
+                    </div>
+                    <button type="submit" name="update_status" class="btn btn-warning btn-sm w-100 mb-2">Update Metadata</button>
+                </form>
+                <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm w-100 mt-2">Back to Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Center Column: Core Ticket Description and Activity Timeline Stream -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 p-4">
+            <span class="text-muted small">Ticket #{{ ticket.ticket_id }}</span>
+            <h2 class="mb-3 text-dark fw-bold">{{ ticket.title }}</h2>
+
+            <div class="bg-white p-3 rounded border mb-4">
+                <p class="mb-0 text-secondary" style="white-space: pre-wrap;">{{ ticket.description }}</p>
+            </div>
+
+            <h5 class="border-bottom pb-2 fw-bold text-dark">Activity Timeline History</h5>
+
+            <div class="comment-stream my-3">
+                {% for comment in comments %}
+                    <div class="p-3 mb-2 bg-white rounded border-start border-primary border-4 shadow-sm">
+                        <div class="d-flex justify-content-between mb-1">
+                            <strong class="text-primary small">{{ comment.author.username }}</strong>
+                            <small class="text-muted" style="font-size: 0.75rem;">{{ comment.created_at|date:"M d, H:i" }}</small>
+                        </div>
+                        <p class="mb-0 small text-dark" style="white-space: pre-wrap;">{{ comment.text }}</p>
+                    </div>
+                {% empty %}
+                    <p class="text-muted small italic my-3">No tracking updates recorded.</p>
+                {% endfor %}
+            </div>
+
+            {% if user.is_authenticated %}
+                <div class="mt-4 pt-3 border-top">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ comment_form.as_p }}
+                        <button type="submit" name="add_comment" class="btn btn-primary btn-sm">Publish Message</button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Column: Contextual Client Profiler Card Panel -->
+    <!-- Right Column: Contextual Client Profiler Card Panel -->
+<div class="col-md-3 mb-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white"><h6 class="mb-0">Client Bio Context</h6></div>
+        <div class="card-body">
+            {% if ticket.crm_contact %}
+                <!-- 1. Prints the Contact's First and Last Name -->
+                <p class="mb-1"><strong>Caller Name:</strong> {{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</p>
+
+                <!-- 2. Prints the Contact's Email address -->
+                <p class="mb-1"><strong>Email:</strong> {{ ticket.crm_contact.email|default:"No Email Logged" }}</p>
+
+                <!-- 3. Prints the Contact's Direct Phone Number -->
+                <p class="mb-1"><strong>Phone Line:</strong> {{ ticket.crm_contact.phone|default:"No Phone Logged" }}</p>
+
+                <!-- 4. Navigates the Relationship to Print the Parent Company Name -->
+                <p class="mb-1"><strong>Company:</strong> {{ ticket.crm_contact.company.company_name|default:"Independent Client" }}</p>
+
+                <!-- 5. Optional: Render a clickable Company Website link if it exists in your DB -->
+                {% if ticket.crm_contact.company.website %}
+                    <div class="mt-2 text-truncate">
+                        <small><a href="https://{{ ticket.crm_contact.company.website }}" target="_blank" class="text-primary">🌐 View Company Site</a></small>
+                    </div>
+                {% endif %}
+            {% else %}
+                <p class="text-muted italic small mb-0">No active contact mapped to this incident case record.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<div class="card shadow mx-auto" style="max-width: 600px;">
+    <div class="card-header bg-primary text-white"><h4>Submit a Support Request</h4></div>
+    <div class="card-body">
+        <form method="POST">
+            {% csrf_token %}
+
+            <!-- Dynamic layout loop draws fields perfectly from your forms.py definitions -->
+            {% for field in form %}
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-secondary">{{ field.label }}</label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <div class="text-danger small">{{ field.errors|striptags }}</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-success w-100 mt-2">Submit Ticket to CRM Database</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+
+<script>
+    // Native JavaScript click-handler to pull your Postgres contacts smoothly
+    function loadCompanyContacts(companyId) {
+        const targetPanel = document.getElementById('drilldown-panel');
+        targetPanel.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 small text-muted">Fetching CRM records...</p></div>';
+
+        fetch(`/intake/company/${companyId}/contacts/`)
+            .then(response => response.text())
+            .then(htmlSnippet => {
+                targetPanel.innerHTML = htmlSnippet;
+            })
+            .catch(err => {
+                targetPanel.innerHTML = '<div class="alert alert-danger m-3">Error fetching CRM data.</div>';
+            });
+
+    }
+</script>
+<div class="mt-3">
+    <span class="text-muted small">Caller missing from system database?</span>
+    <a href="{% url 'quick_add_contact' %}" class="btn btn-outline-success btn-sm ms-2">+ Create New CRM Contact</a>
+</div>
+
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-0 p-4 bg-white text-center">
+<h2 class="fw-bold text-dark mb-1">Live Caller Identity Lookup Desk</h2>
+            <p class="text-muted">Type an incoming caller's name or corporate company file account name below.</p>
+            <form method="GET" action="{% url 'caller_intake' %}" class="mx-auto mt-2" style="max-width: 600px;">
+                <div class="input-group input-group-lg">
+                    <input type="text" name="q" class="form-control shadow-none" placeholder="Enter name or company..." value="{{ search_query }}" autofocus autocomplete="off">
+                    <button type="submit" class="btn btn-primary px-4">Search System</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% if search_query %}
+<div class="row">
+    <!-- Left Hand Side: Matching Search Results Workspace Column -->
+    <div class="col-md-6 mb-4">
+        <!-- Section A: Matching Companies -->
+        <h5 class="fw-bold text-secondary mb-2">Matching Corporate Entities</h5>
+        <div class="list-group shadow-sm mb-4 bg-white">
+            {% for company in companies %}
+    <button type="button"
+            class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 text-start"
+            onclick="loadCompanyContacts('{{ company.company_id }}')"> <!-- Runs our native browser script -->
+        <div>
+            <strong class="text-primary">{{ company.company_name }}</strong>
+            {% if company.website %}<br><small class="text-muted">{{ company.website }}</small>{% endif %}
+        </div>
+        <span class="text-info small">Show Contacts &rarr;</span>
+    </button>
+{% empty %}
+    <div class="list-group-item text-muted small py-3">No corporate entity records match.</div>
+{% endfor %}
+
+        </div>
+
+        <!-- Section B: Direct Contact Matches -->
+        <h5 class="fw-bold text-secondary mb-2">Individual Contact Matches</h5>
+        <div class="list-group shadow-sm bg-white">
+            {% for contact in contacts %}
+                <div class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <strong class="text-dark">{{ contact.first_name }} {{ contact.last_name }}</strong>
+                        <br><small class="text-muted">Employer: {{ contact.company.company_name|default:"Independent Account" }}</small>
+                    </div>
+                    <a href="{% url 'create_ticket' %}?contact_id={{ contact.contact_id }}" class="btn btn-success btn-sm">🎫 Open Ticket</a>
+                </div>
+            {% empty %}
+                <div class="list-group-item text-muted small py-3">No individual contact accounts match.</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Right Hand Side: Dynamic Company Profile Drilldown Panel -->
+    <div class="col-md-6 mb-4" id="drilldown-panel">
+        <div class="card p-4 border-0 shadow-sm text-center bg-white text-muted h-100 d-flex align-items-center justify-content-center">
+            <p class="mb-0 italic small">Select a corporate profile file from the left to drill down into company personnel layout trees instantly.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
