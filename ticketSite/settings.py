@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-o5h6%+fzkr#d3(%b034y+aeh0q&t7_i!4b8+rk73io88)4(h3^"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['://mashburndatasystems.com', '209.97.146.203']
 
 
 # Application definition
@@ -78,9 +78,9 @@ WSGI_APPLICATION = "ticketSite.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mds_contact_pro',       # <-- Change to your actual DB name
-        'USER': 'postgres',       # <-- Change to your DB username
-        'PASSWORD': 'postgres',        # <-- Change to your DB password
+        'NAME': 'mashburn_crm_production',       # <-- Change to your actual DB name
+        'USER': 'mds_admin_user',       # <-- Change to your DB username
+        'PASSWORD': 'Tinman19552coma!',        # <-- Change to your DB password
         'HOST': 'localhost',                # <-- Change if your DB is hosted remotely
         'PORT': '5432',
     }
@@ -163,4 +163,6 @@ MAILERS = {
 # This setting remains outside the dictionary to handle branding defaults
 DEFAULT_FROM_EMAIL = "Mashburn Data Support <support@mashburndatasystems.com>"
 
+# Forces all @login_required security decorators to redirect straight to your admin login desk
+LOGIN_URL = '/admin/login/'
 
