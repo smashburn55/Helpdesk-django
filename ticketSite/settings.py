@@ -75,16 +75,49 @@ WSGI_APPLICATION = "ticketSite.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'mashburn_crm_production',       # <-- Change to your actual DB name
-        'USER': 'mds_admin_user',       # <-- Change to your DB username
-        'PASSWORD': 'Tinman19552coma!',        # <-- Change to your DB password
-        'HOST': 'localhost',                # <-- Change if your DB is hosted remotely
-        'PORT': '5432',
+import socket
+import os
+from pathlib import Path
+
+# Automatically detect the hostname of the machine executing the code
+hostname = socket.gethostname().lower()
+
+if "gametech" in hostname or "localhost" in hostname:
+    # =========================================================================
+    # 💻 LOCAL LAPTOP DEVELOPMENT PROFILE
+    # =========================================================================
+    DEBUG = True
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'mds_contact_pro',  # Your local laptop database name
+            'USER': 'postgres',  # Your local laptop user
+            'PASSWORD': 'postgres',  # Your local laptop password
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
     }
-}
+else:
+    # =========================================================================
+    # ☁️ DIGITALOCEAN LIVE PRODUCTION SECURITY INSTANCE PROFILE
+    # =========================================================================
+    DEBUG = False
+    ALLOWED_HOSTS = ['://mashburndatasystems.com', '209.97.146.203']
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'mashburn_crm_production',
+            'USER': 'mds_admin_user',
+            'PASSWORD': 'Tinman19552coma!',  # Secure cloud password
+            'HOST': '127.0.0.1',  # Forces local socket bindings inside the droplet
+            'PORT': '5432',
+        }
+    }
+
+# Keep the rest of your settings (STATIC_URL, STATIC_ROOT, etc.) exactly the same below!
 
 
 # Password validation
