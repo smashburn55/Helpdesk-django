@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST, require_GET
 from django.contrib import messages
 from django.db.models import Q
 from .models import Ticket, TicketStatus, Comment, ContactCRM
@@ -288,4 +289,67 @@ def helpdesk_analytics(request):
         'tech_workloads': tech_workloads,
     }
     return render(request, 'ticketApp/analytics.html', context)
+
+
+from django.contrib.admin.views.decorators import staff_member_required
+from .forms import TechnicianCreationForm, TechPasswordResetForm
+
+
+@login_required
+@staff_member_required  # Security check: Only staff managers can access the roster tools
+def roster_management(request):
+    """Operational Hub to display, add, and toggle helpdesk technician profiles."""
+    techs = User.objects.all().order_by('username')
+
+    if request.method == 'POST' and 'add_tech' in request.POST:
+        create_form = TechnicianCreationForm(request.POST)
+        if create_form.is_valid():
+            create_form.save()
+            messages.success(request,
+                             f"Technician account '{create_form.cleaned_data['username']}' initialized successfully!")
+            return redirect('roster_management')
+    else:
+        create_form = TechnicianCreationForm()
+
+    context = {
+        'techs': techs,
+        'create_form': create_form,
+        'reset_form': TechPasswordResetForm()
+    }
+    return render(request, 'ticketApp/roster.html', context)
+
+
+@login_required
+@staff_member_required
+@require_POST
+def force_reset_password(request, user_id):
+    """Bypasses mail servers to immediately force-overwrite an agent's password string."""
+    tech = get_object_or_404(User, pk=user_id)
+    reset_form = TechPasswordResetForm(request.POST)
+
+    if reset_form.is_valid():
+        tech.set_password(reset_form.cleaned_data['new_password'])
+        tech.save()
+        messages.success(request, f"Password for agent '{tech.username}' has been securely reset.")
+    else:
+        messages.error(request, "Invalid password specifications provided.")
+
+    return redirect('roster_management')
+
+
+@login_required
+@staff_member_required
+def toggle_tech_status(request, user_id):
+    """Instantly revokes or reinstates server access without deleting historical log connections."""
+    tech = get_object_or_404(User, pk=user_id)
+
+    if tech == request.user:
+        messages.error(request, "Security protection block: You cannot deactivate your own administrative account.")
+    else:
+        tech.is_active = not tech.is_active
+        tech.save()
+        status_text = "Activated" if tech.is_active else "Deactivated/Locked"
+        messages.success(request, f"Account status for '{tech.username}' flipped to: {status_text}")
+
+    return redirect('roster_management')
 

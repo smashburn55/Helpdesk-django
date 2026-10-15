@@ -11,5 +11,8 @@ urlpatterns = [
     # Add this path rule inside your ticketApp/urls.py file:
     path('api/v1/web-intake/', views.web_intake_api, name='web_intake_api'),
     path('analytics/', views.helpdesk_analytics, name='helpdesk_analytics'),
+    path('management/roster/', views.roster_management, name='roster_management'),
+    path('management/roster/reset/<int:user_id>/', views.force_reset_password, name='force_reset_password'),
+    path('management/roster/toggle/<int:user_id>/', views.toggle_tech_status, name='toggle_tech_status'),
 
 ]

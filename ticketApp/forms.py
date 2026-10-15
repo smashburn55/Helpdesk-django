@@ -6,7 +6,7 @@ from .models import Ticket, ContactCRM, CompanyCRM, Comment
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['title', 'description', 'crm_contact']
+        fields = ['title', 'description', 'priority', 'crm_contact']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,5 +55,40 @@ class QuickContactForm(forms.Form):
         required=False,
         empty_label="-- Independent / No Company --",
         widget=forms.Select(attrs={'class': 'form-select'})
+    )
+from django.contrib.auth.models import User
+
+class TechnicianCreationForm(forms.ModelForm):
+    """Secure operational form to initialize a fresh helpdesk agent row."""
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Set initial password...'}),
+        label="Initial Access Password"
+    )
+
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'e.g., jsmith'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'agent@yourdomain.com'}),
+        }
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # CRITICAL: Forces Django to securely hash and encrypt the raw password text string
+        user.set_password(self.cleaned_data["password"])
+        user.is_staff = True  # Automatically grants them baseline helpdesk technician clearance rules
+        if commit:
+            user.save()
+        return user
+
+
+class TechPasswordResetForm(forms.Form):
+    """Manager-override text form to force-overwrite a forgotten password."""
+    new_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Type new secure password...'}),
+        label="New Overwrite Password"
     )
 
