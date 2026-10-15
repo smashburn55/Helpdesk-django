@@ -11,15 +11,17 @@
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
-                    <thead class="table-light text-uppercase text-muted" style="font-size: 0.7rem;">
-                        <tr>
-                            <th class="ps-3">Username</th>
-                            <th>Full Name</th>
-                            <th>Email Address</th>
-                            <th>Status Gate</th>
-                            <th class="text-end pe-3" style="width: 250px;">Administrative Actions Override</th>
-                        </tr>
-                    </thead>
+                    <!-- Inside ticketApp/templates/ticketApp/roster.html -> Table headers section -->
+<thead class="table-light text-uppercase text-muted" style="font-size: 0.7rem;">
+    <tr>
+        <th class="ps-3">Username</th>
+        <th>Full Name</th>
+        <th>Email Address</th>
+        <th>Account Access</th> <!-- Changed from "Status Gate" -->
+        <th class="text-end pe-3" style="width: 250px;">Administrative Actions Override</th>
+    </tr>
+</thead>
+
                     <tbody>
                         {% for tech in techs %}
                         <tr class="{% if not tech.is_active %}table-light opacity-50{% endif %}">

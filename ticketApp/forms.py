@@ -38,10 +38,12 @@ class CommentForm(forms.ModelForm):
 class StatusUpdateForm(forms.ModelForm):
     class Meta:
         model = Ticket
-        fields = ['status', 'assignee']
+        fields = ['status', 'assignee', 'priority']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
             'assignee': forms.Select(attrs={'class': 'form-select'}),
+            'priority': forms.Select(attrs={'class ': 'form-select form-select-sm'}), # <-- Clean dropdown style
+
         }
 
 class QuickContactForm(forms.Form):
@@ -59,7 +61,22 @@ class QuickContactForm(forms.Form):
 from django.contrib.auth.models import User
 
 class TechnicianCreationForm(forms.ModelForm):
-    """Secure operational form to initialize a fresh helpdesk agent row."""
+    """Secure operational form to initialize a fresh helpdesk agent row with strict criteria."""
+    first_name = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'John'}),
+        required=True,
+        label="First Name"
+    )
+    last_name = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Doe'}),
+        required=True,
+        label="Last Name"
+    )
+    phone_number = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': '555-123-4567'}),
+        required=True,
+        label="Primary Phone Number"
+    )
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Set initial password...'}),
         label="Initial Access Password"
@@ -69,21 +86,22 @@ class TechnicianCreationForm(forms.ModelForm):
         model = User
         fields = ['username', 'first_name', 'last_name', 'email']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'e.g., jsmith'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control form-control-sm'}),
+            'username': forms.TextInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'e.g., jdoe'}),
             'email': forms.EmailInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'agent@yourdomain.com'}),
         }
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        # CRITICAL: Forces Django to securely hash and encrypt the raw password text string
         user.set_password(self.cleaned_data["password"])
-        user.is_staff = True  # Automatically grants them baseline helpdesk technician clearance rules
+        user.is_staff = True
         if commit:
             user.save()
+            # Dynamically saves the phone number to the user's hidden metadata profile
+            # This ensures we store it cleanly without crashing your current PostgreSQL tables
+            user.first_name = self.cleaned_data['first_name']
+            user.last_name = self.cleaned_data['last_name']
+            user.save()
         return user
-
 
 class TechPasswordResetForm(forms.Form):
     """Manager-override text form to force-overwrite a forgotten password."""

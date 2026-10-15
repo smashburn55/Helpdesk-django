@@ -32,64 +32,95 @@
 <!-- Commercial High-Density Data Grid Registry Table -->
 <div class="card shadow-sm border-0 overflow-hidden">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 bg-white" style="font-size: 0.9rem;">
-            <thead class="table-light text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">
-                <tr>
-                    <th class="ps-3" style="width: 75px;">ID</th>
-                    <th>Ticket Summary</th>
-                    <th class="d-none d-md-table-cell">Company</th>
-                    <th class="d-none d-md-table-cell">Contact</th>
-                    <th>Technician</th>
-                    <th>Security</th>
-                    <th>Status</th>
-                    <th class="text-end pe-3" style="width: 120px;">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for ticket in tickets %}
-                <tr>
-                    <!-- Custom Postgres Primary Key Mapping -->
-                    <td class="ps-3 fw-bold text-secondary">#{{ ticket.ticket_id }}</td>
-                    <td>
-                        <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">{{ ticket.title }}</div>
-                        <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ ticket.description }}</small>
-                    </td>
-                    <td class="d-none d-md-table-cell"><span class="fw-semibold text-secondary">{{ ticket.company.company_name|default:"Independent" }}</span></td>
-                    <td>
-                        <div class="d-none d-md-table-cell fw-bold" style="font-size: 0.85rem;">{{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</div>
-                        <small class="text-muted text-lowercase" style="font-size: 0.75rem;">{{ ticket.crm_contact.email }}</small>
-                    </td>
-                    <td>
-                        {% if ticket.assignee %}
-                            <span class="badge bg-light text-dark border border-secondary py-1 px-2">{{ ticket.assignee.username }}</span>
-                        {% else %}
-                            <span class="text-danger fw-bold italic small">⚠️ Unassigned</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <!-- Dynamic Server-Side Calculated SLA Timing Badges -->
-                        <span class="{{ ticket.sla_status_data.class }}" style="font-size: 0.8rem; font-weight: 700;">
-                            {{ ticket.sla_status_data.label }}
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge {% if ticket.status == 'DONE' %}bg-success{% elif ticket.status == 'PROG' %}bg-warning text-dark{% elif ticket.status == 'REV' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
-                            {{ ticket.get_status_display }}
-                        </span>
-                    </td>
-                    <td class="text-end pe-3">
-                        <a href="{% url 'ticket_by_id' ticket.ticket_id %}" class="btn btn-outline-primary btn-sm px-2 py-1" style="font-size: 0.8rem;">Manage &rarr;</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="8" class="text-center py-4 text-muted italic">
-                        No open support instances found matching the current grid constraints ribbon.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+       <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+    <!-- UPGRADED SIMPLIFIED TABLE HEADERS -->
+    <thead class="table-light text-uppercase text-muted" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+        <tr>
+            <th class="ps-3" style="width: 100px;">Action</th> <!-- This is now your clean Edit column -->
+            <th>Ticket Summary</th>
+            <th class="d-none d-md-table-cell">Company</th>
+            <th class="d-none d-md-table-cell">Contact</th>
+            <th>Technician</th>
+            <th>Date Logged</th>
+            <th class="pe-3" style="width: 120px;">Status</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {% for ticket in tickets %}
+        <tr>
+            <!-- COLUMN 1: Compact, uniform management button replacing raw IDs -->
+            <td class="ps-3">
+                <a href="{% url 'ticket_by_id' ticket.ticket_id %}"
+                   class="btn btn-xs btn-primary fw-bold py-1 px-2 shadow-sm d-inline-block text-decoration-none text-white border-0"
+                   style="font-size: 0.55rem; border-radius: 2px; min-width: 35px; letter-spacing: 0.25px;"
+                   title="Edit Ticket Details">
+                    EDIT &rarr;
+                </a>
+            </td>
+
+            <!-- COLUMN 2: Ticket Summary & Payload Topic Details -->
+            <td>
+                <div class="d-flex align-items-center gap-1">
+                    {% if ticket.priority == 'CRIT' %}
+                        <span class="badge bg-danger text-white px-1 font-monospace" style="font-size: 0.65rem;">CRIT</span>
+                    {% elif ticket.priority == 'HIGH' %}
+                        <span class="badge bg-warning text-dark px-1 font-monospace" style="font-size: 0.65rem;">HIGH</span>
+                    {% elif ticket.priority == 'MED' %}
+                        <span class="badge bg-secondary text-white px-1 font-monospace" style="font-size: 0.65rem;">MED</span>
+                    {% else %}
+                        <span class="badge bg-light text-muted border px-1 font-monospace" style="font-size: 0.65rem;">LOW</span>
+                    {% endif %}
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 180px;">{{ ticket.title }}</div>
+                </div>
+                <small class="text-muted d-block text-truncate" style="max-width: 220px;">{{ ticket.description }}</small>
+            </td>
+
+            <!-- COLUMN 3: Corporate Company Lookup -->
+            <td class="d-none d-md-table-cell">
+                <span class="fw-semibold text-secondary">{{ ticket.company.company_name|default:"Independent" }}</span>
+            </td>
+
+            <!-- COLUMN 4: Individual Customer Caller CRM Contact -->
+            <td class="d-none d-md-table-cell">
+                <div class="fw-bold" style="font-size: 0.85rem;">{{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</div>
+            </td>
+
+            <!-- COLUMN 5: Assigned Helpdesk Technician (Our Quick-Claim target space next) -->
+            <td id="agent-cell-{{ ticket.ticket_id }}">
+                {% if ticket.assignee %}
+                    <span class="badge bg-light text-dark border border-secondary py-1 px-2 font-monospace">@{{ ticket.assignee.username }}</span>
+                {% else %}
+                    <!-- We drop a temporary text placeholder here for our next step alignment check -->
+                    <span class="text-danger fw-bold small">Unassigned</span>
+                {% endif %}
+            </td>
+
+            <!-- COLUMN 6: Replace the old SLA cell with this clear date cell -->
+            <td>
+                <span class="text-secondary fw-semibold" style="font-size: 0.85rem;">
+                    {{ ticket.created_at|date:"M d, Y" }} <small class="text-muted">{{ ticket.created_at|date:"g:i A" }}</small>
+                </span>
+            </td>
+
+
+            <!-- COLUMN 7: Final Status State Badge -->
+            <td class="pe-3">
+                <span class="badge {% if ticket.status == 'DONE' %}bg-success{% elif ticket.status == 'PROG' %}bg-warning text-dark{% elif ticket.status == 'REV' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                    {{ ticket.get_status_display }}
+                </span>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="7" class="text-center py-4 text-muted italic">
+                No open support instances found matching the current grid constraints ribbon.
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
     </div>
 </div>
 {% endblock %}

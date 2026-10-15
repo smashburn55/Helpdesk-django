@@ -16,7 +16,12 @@
                         <label class="form-label small text-muted fw-bold">Assigned Staff Agent</label>
                         {{ status_form.assignee }}
                     </div>
-                    <button type="submit" name="update_status" class="btn btn-warning btn-sm w-100 mb-2">Update Metadata</button>
+                    <!-- NEW UNLOCKED DROPDOWN SELECTOR: Plain English & Obvious -->
+                    <div class="mb-3 border-top pt-2">
+                        <label class="form-label small text-muted fw-bold">Issue Severity</label>
+                        {{ status_form.priority }}
+                    </div>
+                    <button type="submit" name="update_status" class="btn btn-warning btn-sm w-100 mb-2">Update</button>
                 </form>
                 <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm w-100 mt-2">Back to Dashboard</a>
             </div>
@@ -61,37 +66,59 @@
         </div>
     </div>
 
-    <!-- Right Column: Contextual Client Profiler Card Panel -->
-    <!-- Right Column: Contextual Client Profiler Card Panel -->
-<div class="col-md-3 mb-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-header bg-primary text-white"><h6 class="mb-0">Client Bio Context</h6></div>
-        <div class="card-body">
-            {% if ticket.crm_contact %}
-                <!-- 1. Prints the Contact's First and Last Name -->
-                <p class="mb-1"><strong>Caller Name:</strong> {{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</p>
+        <!-- Right Column: Obvious Corporate File & Caller Profiler Panel -->
+    <div class="col-md-3 mb-4">
 
-                <!-- 2. Prints the Contact's Email address -->
-                <p class="mb-1"><strong>Email:</strong> {{ ticket.crm_contact.email|default:"No Email Logged" }}</p>
-
-                <!-- 3. Prints the Contact's Direct Phone Number -->
-                <p class="mb-1"><strong>Phone Line:</strong> {{ ticket.crm_contact.phone|default:"No Phone Logged" }}</p>
-
-                <!-- 4. Navigates the Relationship to Print the Parent Company Name -->
-                <p class="mb-1"><strong>Company:</strong> {{ ticket.crm_contact.company.company_name|default:"Independent Client" }}</p>
-
-                <!-- 5. Optional: Render a clickable Company Website link if it exists in your DB -->
-                {% if ticket.crm_contact.company.website %}
-                    <div class="mt-2 text-truncate">
-                        <small><a href="https://{{ ticket.crm_contact.company.website }}" target="_blank" class="text-primary">🌐 View Company Site</a></small>
-                    </div>
-                {% endif %}
-            {% else %}
-                <p class="text-muted italic small mb-0">No active contact mapped to this incident case record.</p>
-            {% endif %}
+        <!-- MODULE 1: Streamlined Ticket Metadata Audit Log Box -->
+        <div class="card shadow-sm border-0 mb-3 bg-white">
+            <div class="card-header bg-dark text-white"><h6 class="mb-0 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Audit Details</h6></div>
+            <div class="card-body" style="font-size: 0.85rem;">
+                <!-- 1. Explicit Triage Severity Indicator Label -->
+                <div class="mb-2">
+                    <span class="text-muted d-block small mb-1">Issue Severity:</span>
+                    <span class="badge {% if ticket.priority == 'CRIT' %}bg-danger{% else %}bg-secondary{% endif %} text-uppercase px-2 py-1" style="font-size: 0.75rem;">
+                        {{ ticket.get_priority_display }}
+                    </span>
+                </div>
+                <!-- 2. Clean Date Logged Tracker Timestamp (Replacing old abstract SLA text) -->
+                <div class="border-top pt-2 mt-2">
+                    <span class="text-muted d-block small">Date Logged:</span>
+                    <strong class="text-dark d-block mt-1">{{ ticket.created_at|date:"M d, Y" }}</strong>
+                    <small class="text-muted d-block">at {{ ticket.created_at|date:"g:i A" }}</small>
+                </div>
+            </div>
         </div>
+
+        <!-- MODULE 2: Deep CRM Business Directory Matrix Profile Card -->
+        <div class="card shadow-sm border-0 bg-white">
+            <div class="card-header bg-primary text-white"><h6 class="mb-0 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Account Directory File</h6></div>
+            <div class="card-body" style="font-size: 0.85rem;">
+                {% if ticket.crm_contact %}
+                    <p class="mb-1 text-dark"><strong>Caller Name:</strong> {{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</p>
+                    <p class="mb-1 text-muted text-truncate"><strong>Email:</strong> {{ ticket.crm_contact.email|default:"-- No Email On File --" }}</p>
+                    <p class="mb-1 text-muted"><strong>Direct Line:</strong> {{ ticket.crm_contact.phone|default:"-- No Phone On File --" }}</p>
+
+                    <div class="border-top pt-2 mt-2">
+                        <p class="mb-1 text-dark"><strong>🏢 Company:</strong> {{ ticket.company.company_name|default:"Independent Caller" }}</p>
+                        <p class="mb-1 text-muted small"><strong>Main Phone:</strong> {{ ticket.company.phone|default:"-- No Main Line --" }}</p>
+                    </div>
+
+                    <!-- Direct Internal Ledger Lookup Route Button (Replaces old external hyperlink website button) -->
+                    <div class="mt-3 pt-2 border-top">
+                        <a href="{% url 'caller_intake' %}?search_query={{ ticket.company.company_name }}"
+                           class="btn btn-xs btn-outline-primary w-100 py-1 fw-bold text-uppercase"
+                           style="font-size: 0.72rem; border-radius: 4px; letter-spacing: 0.5px;">
+                            🔍 View Full CRM Profile &rarr;
+                        </a>
+                    </div>
+                {% else %}
+                    <p class="text-muted italic small mb-0">No active contact mapped to this incident ticket record.</p>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
-</div>
+
 
 </div>
 {% endblock %}
