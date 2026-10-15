@@ -22,24 +22,28 @@
 
         <div class="col-md-3 d-flex align-items-center justify-content-start ps-2">
             <a href="{% url 'index' %}" class="d-inline-block">
-                <img src="{% static 'ticketApp/images/logo.png' %}" alt="MDS Logo" style="height: 52px; width: auto; object-fit: contain;">
+                <img src="{% static 'ticketApp/images/logo.png' %}" alt="MDS Logo" style="height: 80px; width: auto; object-fit: contain;">
             </a>
         </div>
 
         <!-- Column 2: Center Wing - Centered Branded Title Banner Panel -->
         <div class="col-md-6 d-flex align-items-center justify-content-center">
             <div class="w-100 text-center rounded d-flex align-items-center justify-content-center"
-                 style="background: linear-gradient(90deg, #bfe3f7 0%, #e9ecef 100%); min-height: 65px; max-width: 650px;">
-                <h1 class="mb-0 fw-bold tracking-wide" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 2.2rem; color: #1a252f; letter-spacing: 1px;">
+                 style="background: linear-gradient(90deg, #bfe3f7 0%, #e9ecef 100%); min-height: 80px; max-width: 650px;">
+                <h1 class="mb-0 fw-bold tracking-wide" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.7rem; color: #1a252f; letter-spacing: 1px;">
                     Ticket <span class="text-primary fw-light">Pro</span>
                 </h1>
             </div>
+
         </div>
+        <div class="w-100 text-center rounded d-flex align-items-center justify-content-center"style="font-family: 'Helvetica Neue bold', Arial, sans-serif; font-size: 1.5rem; color: #1a252f; letter-spacing: 1px;"> HELPDESK </div>
 
 
-        <div class="col-md-3 d-flex align-items-center justify-content-end pe-2">
+        <div class="col-md-11 d-flex align-items-center justify-content-end pe-2">
             {% if user.is_authenticated %}
-                <span class="badge bg-dark border border-secondary text-white py-2 px-3 font-monospace shadow-sm" style="font-size: 0.75rem; font-weight: 500; letter-spacing: 0.5px;">
+                <span class="d-flex badge bg-dark border border-secondary text-white py-1.5 px-2.25 font-monospace shadow-sm" style="font-size: 0.7rem;
+                 font-weight: 500;
+                 letter-spacing: 0.5px;">
                     🟢 Agent: {{ user.username }}
                 </span>
             {% else %}

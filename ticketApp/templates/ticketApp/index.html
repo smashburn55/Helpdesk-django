@@ -35,13 +35,13 @@
         <table class="table table-hover align-middle mb-0 bg-white" style="font-size: 0.9rem;">
             <thead class="table-light text-uppercase text-muted" style="font-size: 0.75rem; letter-spacing: 0.5px;">
                 <tr>
-                    <th class="ps-3" style="width: 80px;">ID</th>
-                    <th>Ticket Summary Topic</th>
-                    <th>Company Entity</th>
-                    <th>Reporting Caller</th>
-                    <th>Assigned Agent</th>
-                    <th>SLA Protection</th>
-                    <th>Status State</th>
+                    <th class="ps-3" style="width: 75px;">ID</th>
+                    <th>Ticket Summary</th>
+                    <th class="d-none d-md-table-cell">Company</th>
+                    <th class="d-none d-md-table-cell">Contact</th>
+                    <th>Technician</th>
+                    <th>Security</th>
+                    <th>Status</th>
                     <th class="text-end pe-3" style="width: 120px;">Actions</th>
                 </tr>
             </thead>
@@ -54,9 +54,9 @@
                         <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">{{ ticket.title }}</div>
                         <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ ticket.description }}</small>
                     </td>
-                    <td><span class="fw-semibold text-secondary">{{ ticket.company.company_name|default:"Independent" }}</span></td>
+                    <td class="d-none d-md-table-cell"><span class="fw-semibold text-secondary">{{ ticket.company.company_name|default:"Independent" }}</span></td>
                     <td>
-                        <div class="fw-bold" style="font-size: 0.85rem;">{{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</div>
+                        <div class="d-none d-md-table-cell fw-bold" style="font-size: 0.85rem;">{{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</div>
                         <small class="text-muted text-lowercase" style="font-size: 0.75rem;">{{ ticket.crm_contact.email }}</small>
                     </td>
                     <td>
