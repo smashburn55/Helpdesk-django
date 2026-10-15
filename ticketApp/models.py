@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django import forms
 
 class TicketStatus(models.TextChoices):
     TO_DO = 'TODO', 'To Do'
@@ -87,6 +89,53 @@ class Ticket(models.Model):
     class Meta:
         managed = False  # <-- Crucial: Django treats this as part of your core CRM now!
         db_table = 'support_tickets'
+
+
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low / Routine'),
+        ('MED', 'Medium Bug'),
+        ('HIGH', 'High Impact'),
+        ('CRIT', 'Critical Outage'),
+    ]
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='MED')
+
+    @property
+    def hours_since_creation(self):
+        """Calculates raw float hours that have elapsed since creation."""
+        if not self.created_at:
+            return 0.0
+        elapsed_time = timezone.now() - self.created_at
+        return elapsed_time.total_seconds() / 3600.0
+
+    @property
+    def sla_status_data(self):
+        """
+        COMMERCIAL SLA TRIAGE MATRIX
+        Dynamically calculates contract breaches based on issue priority.
+        """
+        if self.status == 'DONE':
+            return {'label': 'Compliant', 'class': 'badge bg-success-subtle text-success border border-success'}
+
+        elapsed = self.hours_since_creation
+
+        # Assign response windows based on triage selection rules
+        if self.priority == 'CRIT':
+            warning_h, breach_h = 0.5, 1.0  # Critical: 1 hour breach window
+        elif self.priority == 'HIGH':
+            warning_h, breach_h = 2.0, 4.0  # High: 4 hour breach window
+        elif self.priority == 'MED':
+            warning_h, breach_h = 12.0, 24.0  # Medium: 24 hour breach window
+        else:
+            warning_h, breach_h = 24.0, 48.0  # Low: 48 hour breach window
+
+        if self.assignee is None and elapsed > breach_h:
+            return {'label': f'BREACHED (+{int(elapsed - breach_h)}h Overdue)',
+                    'class': 'badge bg-danger text-white p-1'}
+
+        if self.assignee is None and elapsed > warning_h:
+            return {'label': 'SLA Warning', 'class': 'badge bg-warning text-dark border border-warning'}
+
+        return {'label': 'Active / Safe', 'class': 'badge bg-light text-dark border border-secondary'}
 
     def __str__(self):
         return self.title
