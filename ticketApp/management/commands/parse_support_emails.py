@@ -5,6 +5,7 @@ from email.header import decode_header
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from ticketApp.models import Ticket, ContactCRM
+from django.utils import timezone
 
 
 # Inside ticketApp/management/commands/parse_support_emails.py
@@ -79,6 +80,7 @@ class Command(BaseCommand):
             else:
                 body = msg.get_payload(decode=True).decode(errors='ignore')
 
+
             # 6. Database Match & Ingest Row (Proceeds safely with clean data)
             matching_contact = ContactCRM.objects.filter(email__iexact=sender_email_lower).first()
 
@@ -97,6 +99,22 @@ class Command(BaseCommand):
                 crm_contact=matching_contact,
                 company=matching_contact.company if matching_contact.company else None
             )
+            # Inside your loop right after extracting the subject and body from the IMAP email payload:
+            clean_subject = subject_str.strip()
+
+            # DUPLICATE PROTECTION SAFETY VALVE: Check if this exact issue was already logged today
+            already_imported = Ticket.objects.filter(
+                title=clean_subject,
+                created_at__date=timezone.now().date()
+            ).exists()
+
+            if already_imported:
+                print(f"Skipping duplicate processing block: '{clean_subject}' has already been written to database.")
+                continue  # Safely skip this loop cycle and advance to the next email record!
+
+            # Your existing Ticket database creation line follows cleanly right below this...
+            # ticket = Ticket.objects.create(title=clean_subject, description=body, ...)
+
             # Inside your parse_support_emails.py loop near the bottom:
             new_ticket = Ticket.objects.create(
                 title=subject_str[:200],
