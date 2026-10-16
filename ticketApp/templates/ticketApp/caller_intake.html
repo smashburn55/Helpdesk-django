@@ -1,43 +1,51 @@
 {% extends 'ticketApp/base.html' %}
 {% block content %}
 
-<script>
-    // Native JavaScript click-handler to pull your Postgres contacts smoothly
-    function loadCompanyContacts(companyId) {
-        const targetPanel = document.getElementById('drilldown-panel');
-        targetPanel.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2 small text-muted">Fetching CRM records...</p></div>';
 
-        fetch(`/intake/company/${companyId}/contacts/`)
-            .then(response => response.text())
-            .then(htmlSnippet => {
-                targetPanel.innerHTML = htmlSnippet;
-            })
-            .catch(err => {
-                targetPanel.innerHTML = '<div class="alert alert-danger m-3">Error fetching CRM data.</div>';
-            });
-
-    }
-</script>
-<div class="mt-3">
+<!-- TOP SUB-HEADER BAR: Handling New Customer Outliers -->
+<div class="d-flex justify-content-between align-items-center mb-3">
     <span class="text-muted small">Caller missing from system database?</span>
-    <a href="{% url 'quick_add_contact' %}" class="btn btn-outline-success btn-sm ms-2">+ Create New CRM Contact</a>
+    <a href="#" class="btn btn-outline-success btn-sm fw-bold">+ Create New CRM Contact</a>
 </div>
 
+<!-- MAIN UNIFIED WORKSTATION SEARCH & BROWSE DECK -->
+<div class="card shadow-sm border-0 bg-white p-4 mb-4">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-dark mb-1">Live Caller Identity Lookup Desk</h2>
+        <p class="text-muted small">Type an incoming caller's name, phone, or corporate company file account name below.</p>
+    </div>
 
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm border-0 p-4 bg-white text-center">
-<h2 class="fw-bold text-dark mb-1">Live Caller Identity Lookup Desk</h2>
-            <p class="text-muted">Type an incoming caller's name or corporate company file account name below.</p>
-            <form method="GET" action="{% url 'caller_intake' %}" class="mx-auto mt-2" style="max-width: 600px;">
-                <div class="input-group input-group-lg">
-                    <input type="text" name="q" class="form-control shadow-none" placeholder="Enter name or company..." value="{{ search_query }}" autofocus autocomplete="off">
-                    <button type="submit" class="btn btn-primary px-4">Search System</button>
+    <!-- The Single Master Search Form Routing Channel -->
+    <form method="GET" action="{% url 'caller_intake' %}" class="d-flex gap-2 justify-content-center mx-auto" style="max-width: 750px; width: 100%;">
+        <input type="text" name="search_query" class="form-control form-control-lg" placeholder="Enter name, phone, or company..." value="{{ search_query|default:'' }}" style="font-size: 1rem;">
+
+        <button type="submit" class="btn btn-primary fw-bold px-4" style="min-width: 140px;">Search System</button>
+
+        <button type="button" class="btn btn-outline-secondary fw-bold text-nowrap px-3" id="browse-companies-toggle">
+            📋 Browse All
+        </button>
+    </form>
+
+    <!-- SLIDE-OUT COMPANY MATRIX TRACE: Dropdown Alphabetical Index (A-Z) -->
+    <div id="company-directory-panel" class="d-none mt-4 border rounded p-3 bg-light mx-auto" style="max-width: 750px; width: 100%; max-height: 250px; overflow-y: auto;">
+        <h6 class="fw-bold text-dark border-bottom pb-2 mb-2 font-monospace small" style="font-size: 0.75rem; letter-spacing: 0.5px;">Contact Pro Corporate Directory Index</h6>
+        <div class="row row-cols-1 row-cols-md-2 g-2">
+            {% for co in all_companies %}
+                <div class="col">
+                    <a href="{% url 'caller_intake' %}?search_query={{ co.company_name|urlencode }}"
+                       class="d-block p-2 rounded bg-white border text-decoration-none text-primary fw-semibold small text-truncate shadow-2xs hover-bg-light">
+                        🏢 {{ co.company_name }}
+                    </a>
                 </div>
-            </form>
+            {% empty %}
+                <div class="col-12 text-muted italic small py-2 text-center">No corporate entries found inside your remote PostgreSQL database tables.</div>
+            {% endfor %}
         </div>
     </div>
 </div>
+
+<!-- ... Keep your existing Contact Results Table List loop syntax matching exactly below as it was ... -->
+
 
 {% if search_query %}
 <div class="row">
@@ -47,7 +55,7 @@
         <h5 class="fw-bold text-secondary mb-2">Matching Corporate Entities</h5>
         <div class="list-group shadow-sm mb-4 bg-white">
             {% for company in companies %}
-    <button type="button"
+            <button type="button"
             class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 text-start"
             onclick="loadCompanyContacts('{{ company.company_id }}')"> <!-- Runs our native browser script -->
         <div>
@@ -61,6 +69,7 @@
 {% endfor %}
 
         </div>
+
 
         <!-- Section B: Direct Contact Matches -->
         <h5 class="fw-bold text-secondary mb-2">Individual Contact Matches</h5>
@@ -87,4 +96,108 @@
     </div>
 </div>
 {% endif %}
+
+<!-- Replace your script lines at the bottom of caller_intake.html with this clean copy-paste block -->
+<script>
+function loadCompanyContacts(coId) {
+    // FIXED: Now matching your exact container element ID perfectly!
+    var dropzone = document.getElementById('drilldown-panel');
+    if (!dropzone) return;
+
+    // Provide immediate, crisp visual loading feedback inside your right display pane card container
+    dropzone.innerHTML = `
+        <div class="card p-4 border-0 shadow-sm text-center bg-white text-muted h-100 d-flex align-items-center justify-content-center">
+            <div>
+                <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+                <span class="d-block text-muted small italic">Querying Personnel Trees...</span>
+            </div>
+        </div>
+    `;
+
+    // Query your native Company Ledger View backend engine function via standard background fetch
+    fetch('/company/' + coId + '/ledger/')
+    .then(function(res) { return res.text(); })
+    .then(function(htmlString) {
+        // Use browser parsing to cleanly pull ONLY the Personnel Tree table row data out of our ledger sheet
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(htmlString, 'text/html');
+
+        // Grab the corporate meta cards data info blocks from your ledger view cleanly
+        var companyHeader = doc.querySelector('h3.fw-bold') ? doc.querySelector('h3.fw-bold').innerText : 'Corporate Account Profile';
+        var companyPhone = doc.querySelector('.text-dark.fw-bold') ? doc.querySelector('.text-dark.fw-bold').innerText : '-- No Main Line --';
+        var companyWeb = doc.querySelector('.text-dark.font-monospace') ? doc.querySelector('.text-dark.font-monospace').innerText : '-- No Site Domain --';
+
+        // Isolate the matching personnel table rows dataset chunk from your task C ledger view template
+        var contactRows = doc.querySelector('.card-header.bg-dark').parentElement.querySelector('tbody');
+        var rowsHtml = contactRows ? contactRows.innerHTML : '<tr><td colspan="3" class="text-center py-2 text-muted">No staff entries found inside corporate file.</td></tr>';
+
+        // Re-draw your elegant high-density corporate account panel directly inside your drilldown-panel card
+        dropzone.innerHTML = `
+            <div class="card p-4 border-0 shadow-sm bg-white h-100 text-start">
+                <div class="bg-dark text-white p-3 rounded-top d-flex align-items-center justify-content-between mb-3 shadow-xs">
+                    <h6 class="mb-0 fw-bold text-uppercase small" style="letter-spacing: 0.5px;">🏢 Company File: ${companyHeader}</h6>
+                    <span class="badge bg-secondary font-monospace" style="font-size: 0.65rem;">ID: #${coId}</span>
+                </div>
+
+                <div class="px-2 mb-3" style="font-size: 0.85rem;">
+                    <div class="mb-1"><strong>Main Line Phone:</strong> <span class="font-monospace text-secondary">${companyPhone}</span></div>
+                    <div><strong>Web Directory:</strong> <span class="font-monospace text-muted small">${companyWeb}</span></div>
+                </div>
+
+                <div class="card border border-light shadow-2xs">
+                    <div class="card-header bg-light py-1 px-3 border-bottom"><small class="fw-bold text-uppercase text-muted font-monospace" style="font-size: 0.68rem; letter-spacing: 0.5px;">Verified Personnel Staff Directory</small></div>
+                    <div class="table-responsive" style="max-height: 220px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0" style="font-size: 0.82rem;">
+                            <thead class="table-light text-muted" style="font-size: 0.7rem;">
+                                <tr>
+                                    <th class="ps-3">Full Name</th>
+                                    <th>Direct Phone Extension</th>
+                                    <th class="pe-3">Email Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-auto text-end pt-3 border-top">
+                    <a href="/company/${coId}/ledger/" class="btn btn-xs btn-primary fw-bold px-3 py-1" style="font-size: 0.75rem; border-radius: 4px; letter-spacing: 0.5px;">
+                        Open Master Ledger Account File &rarr;
+                    </a>
+                </div>
+            </div>
+        `;
+    })
+    .catch(function(err) {
+        dropzone.innerHTML = `
+            <div class="card p-4 border-0 shadow-sm text-center bg-white text-danger h-100 d-flex align-items-center justify-content-center">
+                <div class="small fw-bold">⚠️ Connection Exception: Unable to query roster tree records.</div>
+            </div>
+        `;
+    });
+}
+
+// Keep your existing Browse All Toggle tracking script active below
+document.addEventListener('DOMContentLoaded', function() {
+    var toggleBtn = document.getElementById('browse-companies-toggle');
+    var directoryPanel = document.getElementById('company-directory-panel');
+    if (toggleBtn && directoryPanel) {
+        toggleBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (directoryPanel.classList.contains('d-none')) {
+                directoryPanel.classList.remove('d-none');
+                toggleBtn.classList.remove('btn-outline-secondary');
+                toggleBtn.classList.add('btn-dark');
+            } else {
+                directoryPanel.classList.add('d-none');
+                toggleBtn.classList.remove('btn-dark');
+                toggleBtn.classList.add('btn-outline-secondary');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
+

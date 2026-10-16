@@ -16,5 +16,7 @@ urlpatterns = [
     path('management/roster/toggle/<int:user_id>/', views.toggle_tech_status, name='toggle_tech_status'),
     # Place this path string inside your ticketApp/urls.py patterns array list:
     path('ticket/<int:ticket_id>/claim-api/', views.claim_ticket_api, name='claim_ticket_api'),
+    # Place this path string inside your ticketApp/urls.py array:
+    path('company/<int:company_id>/ledger/', views.company_profile_ledger, name='company_profile_ledger'),
 
 ]

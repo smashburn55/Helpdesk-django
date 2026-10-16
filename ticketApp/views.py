@@ -112,23 +112,35 @@ def ticket_by_id(request, pk):
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import CompanyCRM, ContactCRM, Ticket
 
+@login_required
 def caller_intake(request):
-    search_query = request.GET.get('q', '').strip()
-    companies = CompanyCRM.objects.none()
-    contacts = ContactCRM.objects.none()
+    """Customer Phone Intake workstation desk handles call logs, company filters, and contacts."""
+    search_query = request.GET.get('search_query', '').strip()
+    contacts = None
+    companies = None  # <-- ADDED THIS PROPERTY ANCHOR
+
+    # Always pull the complete alphabetical array for your 'Browse All' tray card desk
+    all_companies = CompanyCRM.objects.all().order_by('company_name')
 
     if search_query:
-        # Tech can search companies by name
-        companies = CompanyCRM.objects.filter(company_name__icontains=search_query)[:15]
-        # Tech can search contacts by first or last name
-        contacts = ContactCRM.objects.filter(
-            Q(first_name__icontains=search_query) | Q(last_name__icontains=search_query)
-        ).select_related('company')[:15]
+        # 1. NEW COMPREHENSIVE SEARCH: Query your Company table directly for keyword matches
+        companies = CompanyCRM.objects.filter(
+            Q(company_name__icontains=search_query)
+        ).distinct().order_by('company_name')
 
+        # 2. Existing Comprehensive Search: Query your Contacts table directly
+        contacts = ContactCRM.objects.filter(
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(company__company_name__icontains=search_query)
+        ).distinct().order_by('last_name')
+
+    # 2. ENSURE THE VARIABLE IS PRESENT INSIDE THE FINAL CONTEXT DICTIONARY
     context = {
-        'companies': companies,
         'contacts': contacts,
+        'companies': companies,
         'search_query': search_query,
+        'all_companies': all_companies, # <-- DOUBLE CHECK THIS LINE SEALS IT
     }
     return render(request, 'ticketApp/caller_intake.html', context)
 
@@ -389,3 +401,22 @@ def claim_ticket_api(request, ticket_id):
         'success': True,
         'username': request.user.username
     })
+
+
+@login_required
+def company_profile_ledger(request, company_id):
+    """Internal master ledger pulling native company assets, matching personnel trees, and history."""
+    company = get_object_or_404(CompanyCRM, pk=company_id)
+
+    # Extract all individual contacts tied to this parent corporation
+    contacts = ContactCRM.objects.filter(company=company).order_by('last_name')
+
+    # Extract all support tickets assigned to this account file
+    tickets = Ticket.objects.filter(company=company).order_by('-ticket_id')
+
+    context = {
+        'company': company,
+        'contacts': contacts,
+        'tickets': tickets
+    }
+    return render(request, 'ticketApp/company_ledger.html', context)

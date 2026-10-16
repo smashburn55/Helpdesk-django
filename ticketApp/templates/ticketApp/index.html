@@ -77,9 +77,17 @@
             </td>
 
             <!-- COLUMN 3: Corporate Company Lookup -->
-            <td class="d-none d-md-table-cell">
-                <span class="fw-semibold text-secondary">{{ ticket.company.company_name|default:"Independent" }}</span>
-            </td>
+            <!-- Replace your old Company column <td> cell loop wrapper with this layout link: -->
+<td class="d-none d-md-table-cell">
+    {% if ticket.company %}
+        <a href="{% url 'company_profile_ledger' ticket.company.company_id %}" class="fw-bold text-primary text-decoration-none hover-underline">
+            🏢 {{ ticket.company.company_name }}
+        </a>
+    {% else %}
+        <span class="text-muted italic">Independent</span>
+    {% endif %}
+</td>
+
 
             <!-- COLUMN 4: Individual Customer Caller CRM Contact -->
             <td class="d-none d-md-table-cell">

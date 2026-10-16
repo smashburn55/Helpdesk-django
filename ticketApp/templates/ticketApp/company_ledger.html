@@ -1,0 +1,114 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<div class="row">
+
+    <!-- LEFT COLUMN: Corporate Business Card Profile Metadata -->
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0 bg-white p-4">
+            <div class="d-flex align-items-center gap-2 border-bottom pb-3 mb-3">
+                <span style="font-size: 2rem;">🏢</span>
+                <div>
+                    <h3 class="fw-bold text-dark mb-0">{{ company.company_name }}</h3>
+                    <small class="text-muted text-uppercase tracking-wider font-monospace" style="font-size: 0.7rem;">Account ID: #{{ company.company_id }}</small>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label small fw-bold text-muted mb-0">Main Phone Matrix</label>
+                <div class="text-dark fw-bold" style="font-size: 1.05rem;">{{ company.phone|default:"-- No Main Line Registered --" }}</div>
+            </div>
+
+            <div class="mb-3 border-top pt-2">
+                <label class="form-label small fw-bold text-muted mb-0">Web Directory Domain</label>
+                <div class="text-dark font-monospace small">{{ company.website|default:"-- No Domain On File --" }}</div>
+            </div>
+
+            <a href="{% url 'index' %}" class="btn btn-outline-secondary btn-sm w-100 mt-4 fw-bold shadow-sm">&larr; Return to Main Desk Grid</a>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Personnel Tree & Active Incident Lists -->
+    <div class="col-md-8 mb-4">
+
+        <!-- MODULE 1: Personnel Roster Matrix -->
+        <div class="card shadow-sm border-0 bg-white mb-4">
+            <div class="card-header bg-dark text-white">
+                <h6 class="mb-0 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Registered Personnel Tree (Contacts)</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-3">Full Name</th>
+                            <th>Direct Phone Line</th>
+                            <th class="pe-3">Email Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contact in contacts %}
+                        <tr>
+                            <td class="ps-3 fw-bold text-dark">{{ contact.first_name }} {{ contact.last_name }}</td>
+                            <td class="font-monospace">{{ contact.phone|default:"-- No Direct Phone --" }}</td>
+                            <td class="pe-3 text-muted">{{ contact.email|default:"-- No Email Registered --" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-muted italic">No individuals mapped to this company card profile record yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MODULE 2: Historic & Active Support Records -->
+        <div class="card shadow-sm border-0 bg-white">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Support Incident History Log</h6>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-3" style="width: 90px;">Action</th>
+                            <th>Issue Summary</th>
+                            <th>Technician</th>
+                            <th class="pe-3" style="width: 110px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in tickets %}
+                        <tr>
+                            <td class="ps-3">
+                                <a href="{% url 'ticket_by_id' t.ticket_id %}" class="btn btn-xs btn-primary py-0 px-2 fw-bold" style="font-size: 0.72rem;">EDIT &rarr;</a>
+                            </td>
+                            <td>
+                                <strong class="text-dark d-block">{{ t.title }}</strong>
+                                <small class="text-muted d-block text-truncate" style="max-width: 350px;">{{ t.description }}</small>
+                            </td>
+                            <td>
+                                {% if t.assignee %}
+                                    <span class="badge bg-light text-dark border font-monospace">@{{ t.assignee.username }}</span>
+                                {% else %}
+                                    <span class="text-danger fw-bold small">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-3">
+                                <span class="badge {% if t.status == 'DONE' %}bg-success{% elif t.status == 'PROG' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                                    {{ t.get_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-3 text-muted italic">No tickets have been opened under this client account.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

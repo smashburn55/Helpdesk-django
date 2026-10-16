@@ -93,28 +93,38 @@
         <div class="card shadow-sm border-0 bg-white">
             <div class="card-header bg-primary text-white"><h6 class="mb-0 fw-bold small text-uppercase" style="letter-spacing: 0.5px;">Account Directory File</h6></div>
             <div class="card-body" style="font-size: 0.85rem;">
-                {% if ticket.crm_contact %}
-                    <p class="mb-1 text-dark"><strong>Caller Name:</strong> {{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</p>
-                    <p class="mb-1 text-muted text-truncate"><strong>Email:</strong> {{ ticket.crm_contact.email|default:"-- No Email On File --" }}</p>
-                    <p class="mb-1 text-muted"><strong>Direct Line:</strong> {{ ticket.crm_contact.phone|default:"-- No Phone On File --" }}</p>
+    {% if ticket.crm_contact %}
+        <!-- Caller Core Profile Data -->
+        <p class="mb-1 text-dark"><strong>Caller Name:</strong> {{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name }}</p>
+        <p class="mb-1 text-muted text-truncate"><strong>Email:</strong> {{ ticket.crm_contact.email|default:"-- No Email On File --" }}</p>
+        <p class="mb-1 text-muted"><strong>Direct Line:</strong> {{ ticket.crm_contact.phone|default:"-- No Phone On File --" }}</p>
 
-                    <div class="border-top pt-2 mt-2">
-                        <p class="mb-1 text-dark"><strong>🏢 Company:</strong> {{ ticket.company.company_name|default:"Independent Caller" }}</p>
-                        <p class="mb-1 text-muted small"><strong>Main Phone:</strong> {{ ticket.company.phone|default:"-- No Main Line --" }}</p>
-                    </div>
-
-                    <!-- Direct Internal Ledger Lookup Route Button (Replaces old external hyperlink website button) -->
-                    <div class="mt-3 pt-2 border-top">
-                        <a href="{% url 'caller_intake' %}?search_query={{ ticket.company.company_name }}"
-                           class="btn btn-xs btn-outline-primary w-100 py-1 fw-bold text-uppercase"
-                           style="font-size: 0.72rem; border-radius: 4px; letter-spacing: 0.5px;">
-                            🔍 View Full CRM Profile &rarr;
-                        </a>
-                    </div>
-                {% else %}
-                    <p class="text-muted italic small mb-0">No active contact mapped to this incident ticket record.</p>
-                {% endif %}
+        <!-- Nested Company Profile Ledger Section Check -->
+        {% if ticket.company %}
+            <div class="border-top pt-2 mt-2">
+                <p class="mb-1 text-dark"><strong>🏢 Company:</strong> {{ ticket.company.company_name }}</p>
+                <p class="mb-1 text-muted small"><strong>Main Phone:</strong> {{ ticket.company.phone|default:"-- No Main Line --" }}</p>
             </div>
+
+            <!-- Direct Internal Ledger Lookup Route Button (Task C Milestone Link) -->
+            <div class="mt-3 pt-2 border-top">
+                <a href="{% url 'company_profile_ledger' ticket.company.company_id %}"
+                   class="btn btn-xs btn-outline-primary w-100 py-1 fw-bold text-uppercase"
+                   style="font-size: 0.72rem; border-radius: 4px; letter-spacing: 0.5px;">
+                    🏢 View Full Company Ledger &rarr;
+                </a>
+            </div>
+        {% else %}
+            <div class="border-top pt-2 mt-2">
+                <p class="text-muted italic small mb-0">Independent Client Account (No corporate profile mapped)</p>
+            </div>
+        {% endif %}
+
+    {% else %}
+        <p class="text-muted italic small mb-0">No active contact mapped to this incident ticket record.</p>
+    {% endif %}
+</div>
+
         </div>
 
     </div>
