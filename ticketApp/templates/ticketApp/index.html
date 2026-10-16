@@ -125,7 +125,10 @@
             🎯 Claim
         </button>
     {% endif %}
+
 </td>
+
+
 
 
 
@@ -157,7 +160,7 @@
 
     </div>
 </div>
-{% endblock %}
+
 
 <script>
 // Wait for the browser window to completely finish loading the layout graphics
@@ -208,5 +211,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
-</script>
+// =========================================================================
+// ⏱️ SILENT BACKGROUND AUTO-REFRESH TIMER ENGINE (Runs every 30 seconds)
+// =========================================================================
+setInterval(function() {
+    // 1. Safeguard: Check if the user is actively typing in the filter input box
+    var searchInput = document.querySelector('input[name="search_query"]');
+    if (searchInput && document.activeElement === searchInput) {
+        return; # Pause refresh so we do not steal text cursor focus while you type!
+    }
 
+    // 2. Query your live web server in the background for fresh data states
+    fetch(window.location.href)
+    .then(function(res) { return res.text(); })
+    .then(function(htmlString) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(htmlString, 'text/html');
+
+        var freshTableBody = doc.querySelector('table tbody');
+        var currentTableBody = document.querySelector('table tbody');
+
+        // 3. Swap out old rows with fresh incoming data grid rows instantly!
+        if (freshTableBody && currentTableBody) {
+            currentTableBody.innerHTML = freshTableBody.innerHTML;
+        }
+    })
+    .catch(function(err) {
+        console.warn("Background grid sync paused temporarily due to network latency.");
+    });
+}, 30000); // 30000 milliseconds = Exactly 30 seconds
+
+</script>
+{% endblock %}
