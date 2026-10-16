@@ -218,11 +218,11 @@ setInterval(function() {
     // 1. Safeguard: Check if the user is actively typing in the filter input box
     var searchInput = document.querySelector('input[name="search_query"]');
     if (searchInput && document.activeElement === searchInput) {
-        return; # Pause refresh so we do not steal text cursor focus while you type!
+        return; // Pause refresh so we do not steal text cursor focus while you type!
     }
 
     // 2. Query your live web server in the background for fresh data states
-    fetch(window.location.href)
+    fetch('/')
     .then(function(res) { return res.text(); })
     .then(function(htmlString) {
         var parser = new DOMParser();
