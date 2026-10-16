@@ -162,9 +162,17 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
+# MODERN DJANGO 6.1+ OUTBOUND SMTP MAIL ROUTER CHANNELS
 MAILERS = {
     "default": {
-        "BACKEND": "django.core.mail.backends.console.EmailBackend",
+        "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
+        "OPTIONS": {
+            "host": "ams3.greengeeks.net",  # <-- UPDATED TO THE DIRECT MASTER SMTP ENDPOINT
+            "port": 465,
+            "use_ssl": True,
+            "username": "support@mashburndatasystems.com",
+            "password": "Tinman55!",
+        },
     },
 }
 
