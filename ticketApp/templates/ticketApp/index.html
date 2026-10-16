@@ -87,14 +87,40 @@
             </td>
 
             <!-- COLUMN 5: Assigned Helpdesk Technician (Our Quick-Claim target space next) -->
-            <td id="agent-cell-{{ ticket.ticket_id }}">
-                {% if ticket.assignee %}
-                    <span class="badge bg-light text-dark border border-secondary py-1 px-2 font-monospace">@{{ ticket.assignee.username }}</span>
-                {% else %}
-                    <!-- We drop a temporary text placeholder here for our next step alignment check -->
-                    <span class="text-danger fw-bold small">Unassigned</span>
-                {% endif %}
-            </td>
+            <!-- Locate and replace your Technician <td> cell container with this reactive cell: -->
+<!-- Inside ticketApp/templates/ticketApp/index.html row loop -->
+<td id="agent-cell-{{ ticket.ticket_id }}">
+    {% if ticket.assignee %}
+        <span class="badge bg-light text-dark border border-secondary py-1 px-2 font-monospace">@{{ ticket.assignee.username }}</span>
+    {% else %}
+        <!-- Production-Ready Inline Quick Claim: Fast, Quiet, and Seamless -->
+        <button type="button"
+                class="btn btn-xs btn-outline-danger fw-bold py-0 px-2"
+                style="font-size: 0.72rem; border-radius: 3px;"
+                onclick="(function(id, btn){
+                    var cell = document.getElementById('agent-cell-' + id);
+                    if(cell) cell.innerHTML = '<span class=\'text-muted small italic\'>Assigning...</span>';
+
+                    fetch('/ticket/' + id + '/claim-api/', {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json' }
+                    })
+                    .then(function(res){ return res.json(); })
+                    .then(function(data){
+                        if(data.success){
+                            if(cell) cell.innerHTML = '<span class=\'badge bg-light text-dark border border-success py-1 px-2 font-monospace\'>@' + data.username + '</span>';
+                            setTimeout(function(){ window.location.reload(); }, 300);
+                        } else { alert('Error: ' + data.message); }
+                    })
+                    .catch(function(err){ console.error('Fail: ' + err); });
+                })({{ ticket.ticket_id }}, this)">
+            🎯 Claim
+        </button>
+    {% endif %}
+</td>
+
+
+
 
             <!-- COLUMN 6: Replace the old SLA cell with this clear date cell -->
             <td>
@@ -124,3 +150,55 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+// Wait for the browser window to completely finish loading the layout graphics
+document.addEventListener('DOMContentLoaded', function() {
+
+    // Catch every click event happening inside your home screen document grid
+    document.body.addEventListener('click', function(event) {
+
+        // Check if the item clicked was one of our crisp red claim buttons
+        var button = event.target.closest('.claim-btn');
+        if (!button) return; // Ignore clicks on any non-claim table elements
+
+        // Extract the raw numeric primary key ID directly from our HTML data tag
+        var ticketId = button.getAttribute('data-ticket-id');
+
+        // 1. Fire a native browser modal alert message layout to confirm the click
+        alert("System confirmation: Click captured locally for Ticket ID #" + ticketId);
+
+        var cell = document.getElementById('agent-cell-' + ticketId);
+        if (cell) {
+            cell.innerHTML = '<span class="text-muted small italic" style="font-size: 0.75rem;">Assigning...</span>';
+        }
+
+        // 2. Stream the POST request to your backend views engine framework
+        fetch('/ticket/' + ticketId + '/claim-api/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(function(res) {
+            alert("Server responded with network code: " + res.status);
+            return res.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                if (cell) {
+                    cell.innerHTML = '<span class="badge bg-light text-dark border border-success py-1 px-2 font-monospace">@' + data.username + '</span>';
+                }
+                setTimeout(function() { window.location.reload(); }, 400);
+            } else {
+                alert("Database message: " + data.message);
+            }
+        })
+        .catch(function(err) {
+            alert("System communication exception: " + err);
+        });
+    });
+});
+</script>
+

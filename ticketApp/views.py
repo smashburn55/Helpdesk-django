@@ -5,9 +5,10 @@ from django.contrib import messages
 from django.db.models import Q
 from .models import Ticket, TicketStatus, Comment, ContactCRM
 from .forms import TicketForm, CommentForm, StatusUpdateForm, QuickContactForm
-
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 @login_required
+@ensure_csrf_cookie
 def index(request):
     # Start with all tickets pulling down from Postgres
     tickets = Ticket.objects.all().order_by('-created_at').select_related('crm_contact', 'crm_contact__company', 'assignee')
@@ -353,3 +354,38 @@ def toggle_tech_status(request, user_id):
 
     return redirect('roster_management')
 
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+
+
+@login_required
+@require_POST
+def claim_ticket_api(request, ticket_id):
+    """Background JSON endpoint allowing an active agent to instantly claim an unassigned case."""
+    ticket = get_object_or_404(Ticket, pk=ticket_id)
+    ticket.assignee = request.user
+    ticket.save()
+    return JsonResponse({'success': True, 'username': request.user.username})
+    return JsonResponse({'success': True, 'username': request.user.username})
+    return JsonResponse({'success': True, 'username': request.user.username})
+    # Safety Check: Prevent accidental overwriting if another agent claimed it first
+    #if ticket.assignee:
+    #    return JsonResponse({
+    #        'success': False,
+    #        'message': f"This instance has already been claimed by @{ticket.assignee.username}."
+    #    }, status=400)
+
+    # Assign the ticket to the active logged-in technician
+    ticket.assignee = request.user
+
+    # Automatically promote 'To Do' tickets to 'In Progress' upon being claimed
+    if ticket.status == 'TODO':
+        ticket.status = 'PROG'
+
+    ticket.save()
+
+    return JsonResponse({
+        'success': True,
+        'username': request.user.username
+    })
