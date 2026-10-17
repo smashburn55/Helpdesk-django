@@ -124,11 +124,21 @@
         <p class="text-muted italic small mb-0">No active contact mapped to this incident ticket record.</p>
     {% endif %}
 </div>
-
         </div>
-
     </div>
-
-
 </div>
+<!-- Inside ticket_by_id.html -> Administrative Controls Block -->
+{% if request.user.is_superuser %}
+<div class="card border border-danger bg-light-subtle p-3 mt-4 rounded shadow-xs" style="background-color: #fff5f5;">
+    <h6 class="text-danger fw-bold small text-uppercase mb-2 font-monospace" style="letter-spacing: 0.5px;">⚠️ Manager Administrative Action Area</h6>
+    <p class="text-muted small mb-3">Wiping an active support incident card is permanent and cannot be undone inside the PostgreSQL ledger books.</p>
+
+    <a href="{% url 'delete_ticket_manager_override' ticket.pk %}"
+       class="btn btn-sm btn-danger fw-bold shadow-sm"
+       onclick="return confirm('Are you 100% absolutely certain you want to permanently delete this incident card from your Contact Pro logs?');">
+        🗑️ Permanently Delete Ticket Record
+    </a>
+</div>
+{% endif %}
+
 {% endblock %}

@@ -3,21 +3,46 @@ from .models import Ticket, ContactCRM, CompanyCRM, Comment
 
 
 # 1. NEW TICKET INTAKE FORM
+from django import forms
+from .models import Ticket, CompanyCRM
+
+from django import forms
+from .models import Ticket, CompanyCRM
+from django.contrib.auth.models import User  # <-- Ensure the User model is imported
+
+
 class TicketForm(forms.ModelForm):
+    """Upgraded Ticket Form featuring dynamic editable corporate and technician selectors."""
+
+    company = forms.ModelChoiceField(
+        queryset=CompanyCRM.objects.all().order_by('company_name'),
+        required=False,
+        empty_label="-- Independent Customer (No Corporate File) --",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Assigned Corporate Account"
+    )
+
+    # NEW WORKFLOW SELECTOR: Dynamic dropdown pulling all helpdesk users/agents
+    assignee = forms.ModelChoiceField(
+        queryset=User.objects.all().order_by('username'),
+        required=False,
+        empty_label="-- Unassigned / Queue Default --",
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        label="Assign Support Technician"
+    )
+
     class Meta:
         model = Ticket
-        fields = ['title', 'description', 'priority', 'crm_contact']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['crm_contact'].queryset = ContactCRM.objects.all().order_by('last_name')
-        self.fields['crm_contact'].empty_label = "-- Select CRM Contact --"
-        self.fields['crm_contact'].required = True
-        # Apply standard Bootstrap layout formatting classes
-        self.fields['title'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Brief summary...'})
-        self.fields['description'].widget.attrs.update(
-            {'class': 'form-control', 'rows': 4, 'placeholder': 'Describe issue...'})
-        self.fields['crm_contact'].widget.attrs.update({'class': 'form-select'})
+        # ADDED 'assigned_tech' cleanly to your fields list right here
+        fields = ['title', 'description', 'status', 'priority', 'company', 'assignee', 'crm_contact']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Brief issue summary...'}),
+            'description': forms.Textarea(
+                attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Detailed diagnostics...'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'priority': forms.Select(attrs={'class': 'form-select'}),
+            'crm_contact': forms.HiddenInput(),
+        }
 
 
 # 2. INTERACTIVE DISCUSSION COMMENT FORM

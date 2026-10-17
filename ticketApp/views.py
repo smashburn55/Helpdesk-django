@@ -39,7 +39,7 @@ def index(request):
     }
     return render(request, 'ticketApp/index.html', context)
 
-@login_required
+
 @login_required
 def create_ticket(request):
     preselected_contact_id = request.GET.get('contact_id', '')
@@ -50,20 +50,37 @@ def create_ticket(request):
             ticket = form.save(commit=False)
             ticket.status = 'TODO'
 
-            # AUTOMATIC PARENT LOOKUP:
-            if ticket.crm_contact:
-                # If a contact is selected, automatically pull their parent company ID
+            # 1. FIXED MAPPING: Explicitly pull and assign the selected staff user object
+            if form.cleaned_data.get('assignee'):
+                ticket.assignee = form.cleaned_data['assignee']
+
+            # 2. AUTOMATIC PARENT COMPANY LOOKUP:
+            if not ticket.company and ticket.crm_contact:
                 ticket.company = ticket.crm_contact.company
 
-            ticket.save()
-            # TRIGGER AUTO-RESPONDER OUTBOUND packet
+            ticket.save()  # Saves everything securely to your 9-table database
             send_ticket_confirmation_email(ticket)
             messages.success(request, 'Support ticket written directly to CRM database!')
             return redirect('index')
+
     else:
         initial_data = {}
+        initial_data['assignee'] = request.user.id  # <-- ADD THIS LINE RIGHT HERE!
+
         if preselected_contact_id:
             initial_data['crm_contact'] = preselected_contact_id
+
+            # =========================================================================
+            # 🏢 DYNAMIC UX LINK OVERRIDE: Auto-populate the parent company select option
+            # =========================================================================
+            try:
+                contact_record = ContactCRM.objects.get(pk=preselected_contact_id)
+                if contact_record.company:
+                    # Pre-selects his true corporate link directly inside your dropdown!
+                    initial_data['company'] = contact_record.company
+            except ContactCRM.DoesNotExist:
+                pass
+
         form = TicketForm(initial=initial_data)
 
     return render(request, 'ticketApp/create_ticket.html', {'form': form})
@@ -420,3 +437,19 @@ def company_profile_ledger(request, company_id):
         'tickets': tickets
     }
     return render(request, 'ticketApp/company_ledger.html', context)
+
+
+@login_required
+def delete_ticket_manager_override(request, pk):
+    """Secure administrative route allowing managers to wipe accidental duplicates from the database."""
+    # SECURITY GATE: Turn away standard agents instantly if they are not a superuser
+    if not request.user.is_superuser:
+        messages.error(request, "Access Denied: Administrative credential levels required to delete data rows.")
+        return redirect('ticket_by_id', pk=pk)
+
+    ticket = get_object_or_404(Ticket, pk=pk)
+    ticket_title = ticket.title
+    ticket.delete()  # Clears the row out of PostgreSQL completely
+
+    messages.warning(request, f"Incident record '{ticket_title}' has been permanently purged from system logs.")
+    return redirect('index')

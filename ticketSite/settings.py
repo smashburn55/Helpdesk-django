@@ -92,10 +92,10 @@ if "gametech" in hostname or "localhost" in hostname:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'mds_contact_pro',  # Your local laptop database name
+            'NAME': 'contact_pro_demo',  # Your local laptop database name
             'USER': 'postgres',  # Your local laptop user
             'PASSWORD': 'postgres',  # Your local laptop password
-            'HOST': 'localhost',
+            'HOST': '127.0.0.1',
             'PORT': '5432',
         }
     }
@@ -103,15 +103,15 @@ else:
     # =========================================================================
     # ☁️ DIGITALOCEAN LIVE PRODUCTION SECURITY INSTANCE PROFILE
     # =========================================================================
-    DEBUG = False
-    ALLOWED_HOSTS = ['://mashburndatasystems.com', '209.97.146.203']
+    DEBUG = True
+    # ALLOWED_HOSTS = ['://mashburndatasystems.com', '209.97.146.203']
 
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'mashburn_crm_production',
-            'USER': 'mds_admin_user',
-            'PASSWORD': 'Tinman19552coma!',  # Secure cloud password
+            'NAME': 'contact_pro_demo',
+            'USER': 'postgres',
+            'PASSWORD': 'postgres',  # Secure cloud password
             'HOST': '127.0.0.1',  # Forces local socket bindings inside the droplet
             'PORT': '5432',
         }

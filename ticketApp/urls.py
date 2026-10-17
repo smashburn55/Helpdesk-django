@@ -18,5 +18,5 @@ urlpatterns = [
     path('ticket/<int:ticket_id>/claim-api/', views.claim_ticket_api, name='claim_ticket_api'),
     # Place this path string inside your ticketApp/urls.py array:
     path('company/<int:company_id>/ledger/', views.company_profile_ledger, name='company_profile_ledger'),
-
+path('ticket/<int:pk>/delete-override/', views.delete_ticket_manager_override, name='delete_ticket_manager_override'),
 ]
