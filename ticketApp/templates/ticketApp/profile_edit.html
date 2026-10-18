@@ -1,0 +1,53 @@
+{% extends 'ticketApp/base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm border-0 bg-white">
+            
+            <div class="bg-dark text-white p-3 rounded-top d-flex align-items-center justify-content-between">
+                <h5 class="fw-bold mb-0">⚙️ Technician Account Settings</h5>
+                <span class="badge bg-secondary font-monospace">@{{ request.user.username }}</span>
+            </div>
+
+            <form method="POST" class="p-4">
+                {% csrf_token %}
+
+                <div class="row g-3 mb-3">
+                    <div class="col">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">First Name</label>
+                        {{ form.first_name }}
+                    </div>
+                    <div class="col">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-1">Last Name</label>
+                        {{ form.last_name }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-1">Email Address Channel</label>
+                    {{ form.email }}
+                </div>
+
+                <div class="mb-4 pt-2 border-top">
+                    <label class="form-label small fw-bold text-success text-uppercase mb-1">📱 Direct Dispatch Callback Phone</label>
+                    {{ form.phone_number }}
+                    <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">Enforces a valid communication endpoint for real-time mobile escalation notices.</small>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between gap-2 pt-2">
+                    <!-- Clean, standard Cancel link route to let them bail out without writing modifications -->
+                    <a href="{% url 'index' %}" class="btn btn-sm btn-outline-secondary fw-bold px-3 py-2">
+                        🚪 Exit to Dashboard
+                    </a>
+
+                    <button type="submit" class="btn btn-primary fw-bold px-4 py-2 shadow-xs">
+                        Save Account Modifications &rarr;
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

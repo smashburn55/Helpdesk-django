@@ -1,4 +1,4 @@
-{% load static %}  <!-- 1. CRITICAL: This must be the very first line of the file -->
+{% load static %} <!-- 🎯 FIXED: This MUST be the absolute first line to clear PyCharm squiggly flags! -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,98 +7,85 @@
 
     <style>
         {% include "ticketApp/bootstrap_styles.html" %}
+
+        /* Heartbeat connection pulse animation for the active agent status dot */
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(25, 135, 84, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(25, 135, 84, 0); }
+        }
+        .animate-pulse { animation: pulse 2s infinite; }
     </style>
 
 </head>
 <body class="bg-light">
 
-    <!-- ==================== BRANDED HEADER RIBBON ==================== -->
-    <!-- Base.html: Upgraded Uniform Branded Header & Ribbon Matrix Layout -->
-<div class="container-fluid p-0 bg-white border-bottom shadow-sm mb-4">
+    <!-- ==================== BRANDED EDGE-TO-EDGE HEADER BAR ==================== -->
+    <div class="w-100 position-relative border-bottom shadow-sm bg-white mb-4">
 
-    <div class="row align-items-center m-0 px-3 pt-3 pb-2" style="min-height: 90px;">
+        <!-- Direct Full-Width Branded Title Bar Banner Asset -->
+        <img src="{% static 'ticketApp/images/ticket_pro_title_bar.png' %}"
+             alt="MDS Ticket Pro Header Bar"
+             class="img-fluid w-100 d-block"
+             style="height: auto; max-height: 85px; object-fit: cover;">
 
-        <div class="col-6 col-md-3 d-flex align-items-center justify-content-start ps-2">
-            <a href="{% url 'index' %}" class="d-inline-block">
-                <img src="{% static 'ticketApp/images/logo.png' %}"
-                     alt="MDS Logo"
-                     style="height: 75px; min-width: 145px; width: auto; object-fit: contain;">
-            </a>
+        <!-- FLOATING SECURITY BADGE CONSOLE OVERLAY: Placed directly on top of your colored banner space -->
+        <div class="position-absolute end-0 top-50 translate-middle-y me-4 d-flex align-items-center" style="z-index: 10; gap: 12px;">
+            <span class="badge d-flex align-items-center px-3 py-2 rounded-pill font-monospace border bg-light text-dark shadow-xs" style="font-size: 0.75rem; font-weight: 700; background-color: rgba(255, 255, 255, 0.9) !important;">
+                <span class="bg-success rounded-circle me-2 animate-pulse" style="width: 8px; height: 8px; display: inline-block;"></span>
+                Agent: <a href="{% url 'profile_edit' %}" class="ms-1 text-primary fw-bold text-decoration-none">@{{ request.user.username }}</a>
+            </span>
+            {% if request.user.is_authenticated %}
+                <a href="{% url 'logout' %}" class="btn btn-xs btn-outline-secondary font-monospace fw-bold bg-white" style="font-size: 0.65rem; padding: 2px 8px;">EXIT</a>
+            {% endif %}
         </div>
 
-        <!-- Column 2: Center Wing - Title Banner with HELPDESK Subtitle -->
-        <div class="col-12 col-md-6 order-3 order-md-2 d-flex align-items-center justify-content-center mt-2 mt-md-0">
-            <div class="w-100 text-center rounded d-flex flex-column align-items-center justify-content-center py-2"
-                 style="background: linear-gradient(90deg, #bfe3f7 0%, #e9ecef 100%); min-height:100px; max-width: 650px;">
-                <!-- Main App Title Row -->
-                <h1 class="mb-0 fw-bold tracking-wide" style="font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 3.2rem; color: #1a252f; letter-spacing: 1px; line-height: 1.1;">
-                    Ticket <span class="text-primary fw-light">Pro</span>
-                </h1>
-                <!-- Stacked Subtitle Element -->
-                <div class="text-uppercase fw-extrabold tracking-widest text-dark mt-1" style="font-size: 0.95rem; font-weight: 800; letter-spacing: 3px;">
-                    HELPDESK
-                </div>
+    </div>
+
+    <!-- ==================== HORIZONTAL NAVIGATION CONTROLS & ALERT BAR ==================== -->
+    <div class="container-fluid px-4 mb-4">
+        <div class="bg-white border p-2 rounded shadow-xs">
+            <div class="d-flex align-items-center justify-content-center gap-2">
+                {% if user.is_authenticated %}
+
+                    <!-- Action Link 1: The Primary High-Density Table Grid View -->
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📋 Grid Desk</a>
+
+                    <!-- Action Link 2: Customer Contact Phone Intake Workstation -->
+                    <a href="{% url 'caller_intake' %}" class="btn btn-outline-info text-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📞 Phone Intake</a>
+
+                    {% if user.is_staff %}
+                        <!-- Action Link 3: Team Staff Accounts Provisioning Portal -->
+                        <a href="{% url 'roster_management' %}" class="btn btn-outline-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">👥 Team Hub</a>
+
+                        <!-- Action Link 4: Executive Performance & Management Reporting Desk -->
+                        <a href="{% url 'helpdesk_analytics' %}" class="btn btn-outline-warning text-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📈 Analytics</a>
+                    {% endif %}
+
+                    <!-- Action Dropdown 5: Live Real-Time Network Compliance Monitoring Bell -->
+                    <div class="dropdown d-inline-block">
+                        <button class="btn btn-outline-danger position-relative px-3 py-1 fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" style="font-size: 0.8rem; min-width: 110px;">
+                            🔔 Alerts
+                            {% if total_bell_count > 0 %}
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.65rem; padding: 3px 6px;">
+                                    {{ total_bell_count }}
+                                </span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 mt-2" style="width: 260px; font-size: 0.8rem;">
+                            <li class="dropdown-header text-uppercase fw-bold text-dark border-bottom pb-1 mb-2">Live Compliance Desk</li>
+                            <li class="p-1 d-flex justify-content-between"><span>SLA Critical</span><span class="badge {% if sla_breaches_count > 0 %}bg-danger{% else %}bg-light text-muted{% endif %}">{{ sla_breaches_count }} Overdue</span></li>
+                            <li class="p-1 d-flex justify-content-between border-top mt-1 pt-2"><span>Internal Notices</span><span class="badge {% if unread_alerts_count > 0 %}bg-warning text-dark{% else %}bg-light text-muted{% endif %}">{{ unread_alerts_count }} New</span></li>
+                        </ul>
+                    </div>
+
+                {% endif %}
             </div>
         </div>
-
-        <!-- Column 3: Right Wing - Agent Label Pushed Fully Flush Right -->
-        <div class="col-6 col-md-3 order-2 order-md-3 d-flex align-items-center justify-content-end pe-2">
-            {% if user.is_authenticated %}
-                <span class="badge bg-dark border border-secondary text-white py-2 px-3 font-monospace shadow-sm text-end" style="font-size: 0.75rem; font-weight: 500; letter-spacing: 0.5px;">
-                    🟢 Agent: {{ user.username }}
-                </span>
-            {% else %}
-                <a href="/admin/login/" class="btn btn-primary btn-sm py-1 px-3 fw-bold">Staff Login &rarr;</a>
-            {% endif %}
-        </div>
     </div>
 
 
-    <!-- BOTTOM TIER: Uniform Horizontal Navigation Controls & Alert Bar Ribbon -->
-    <div class="bg-light border-top py-2 px-3">
-        <div class="d-flex align-items-center justify-content-center gap-2">
-            {% if user.is_authenticated %}
-
-                <!-- Action Link 1: The Primary High-Density Table Grid View -->
-                <a href="{% url 'index' %}" class="btn btn-outline-secondary px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📋 Grid Desk</a>
-
-                <!-- Action Link 2: Customer Contact Phone Intake Workstation -->
-                <a href="{% url 'caller_intake' %}" class="btn btn-outline-info text-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📞 Phone Intake</a>
-
-                {% if user.is_staff %}
-                    <!-- Action Link 3: Team Staff Accounts Provisioning Portal -->
-                    <a href="{% url 'roster_management' %}" class="btn btn-outline-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">👥 Team Hub</a>
-
-                    <!-- Action Link 4: Executive Performance & Management Reporting Desk -->
-                    <a href="{% url 'helpdesk_analytics' %}" class="btn btn-outline-warning text-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📈 Analytics</a>
-                {% endif %}
-
-                <!-- Action Dropdown 5: Live Real-Time Network Compliance Monitoring Bell -->
-                <div class="dropdown d-inline-block">
-                    <button class="btn btn-outline-danger position-relative px-3 py-1 fw-bold shadow-sm" type="button" data-bs-toggle="dropdown" style="font-size: 0.8rem; min-width: 110px;">
-                        🔔 Alerts
-                        {% if total_bell_count > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-white" style="font-size: 0.65rem; padding: 3px 6px;">
-                                {{ total_bell_count }}
-                            </span>
-                        {% endif %}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 mt-2" style="width: 260px; font-size: 0.8rem;">
-                        <li class="dropdown-header text-uppercase fw-bold text-dark border-bottom pb-1 mb-2">Live Compliance Desk</li>
-                        <li class="p-1 d-flex justify-content-between"><span>SLA Critical</span><span class="badge {% if sla_breaches_count > 0 %}bg-danger{% else %}bg-light text-muted{% endif %}">{{ sla_breaches_count }} Overdue</span></li>
-                        <li class="p-1 d-flex justify-content-between border-top mt-1 pt-2"><span>Internal Notices</span><span class="badge {% if unread_alerts_count > 0 %}bg-warning text-dark{% else %}bg-light text-muted{% endif %}">{{ unread_alerts_count }} New</span></li>
-                    </ul>
-                </div>
-
-            {% endif %}
-        </div>
-    </div>
-
-</div>
-<!-- ==================== END HEADER RIBBON ==================== -->
-
-
-    <!-- Core Dynamic Application Workspace Page Block Container -->
+    <!-- ==================== MAIN CORE WEB WORKSPACE PAGE CONTAINER ==================== -->
     <div class="container-fluid px-4">
         {% if messages %}
             {% for message in messages %}
@@ -111,4 +98,3 @@
 
 </body>
 </html>
-

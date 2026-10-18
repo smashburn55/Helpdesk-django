@@ -46,16 +46,23 @@ class TicketForm(forms.ModelForm):
 
 
 # 2. INTERACTIVE DISCUSSION COMMENT FORM
+from .models import Comment
+
 class CommentForm(forms.ModelForm):
+    """Upgraded comment form supporting private internal troubleshooting logs."""
     class Meta:
         model = Comment
-        fields = ['text']
+        fields = ['text', 'is_internal']
         widgets = {
             'text': forms.Textarea(attrs={
-                'class': 'form-control',
+                'class': 'form-control form-control-sm',
                 'rows': 3,
-                'placeholder': 'Type your message or internal update here...'
+                'placeholder': 'Type your diagnostic update or private notes here...'
             }),
+            'is_internal': forms.CheckboxInput(attrs={
+                'class': 'form-check-input',
+                'id': 'internalNoteCheck'
+            })
         }
 
 
@@ -135,3 +142,35 @@ class TechPasswordResetForm(forms.Form):
         label="New Overwrite Password"
     )
 
+from django.contrib.auth.models import User
+from .models import TechProfile
+
+class TechProfileForm(forms.ModelForm):
+    """Form to handle core technician data and phone information concurrently."""
+    first_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    last_name = forms.CharField(max_length=30, required=False, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    phone_number = forms.CharField(max_length=50, required=False, widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': '(555) 555-5555'}))
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+        widgets = {
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        # Pull the custom profile object if passed in to populate the telephone field layout
+        profile = kwargs.pop('profile', None)
+        super().__init__(*args, **kwargs)
+        if profile:
+            self.fields['phone_number'].initial = profile.phone_number
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            # Automatically save or update the linked tech phone record row too
+            profile, created = TechProfile.objects.get_or_create(user=user)
+            profile.phone_number = self.cleaned_data['phone_number']
+            profile.save()
+        return user

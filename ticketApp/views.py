@@ -129,6 +129,25 @@ def ticket_by_id(request, pk):
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import CompanyCRM, ContactCRM, Ticket
 
+
+@login_required
+def add_comment(request, pk):
+    """Intercepts comment submissions and routes them securely by internal status flags."""
+    ticket = get_object_or_404(Ticket, pk=pk)
+
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.ticket = ticket
+            comment.author = request.user
+            comment.save()  # Saves the record cleanly to PostgreSQL with its is_internal flag
+
+            messages.success(request, "Communication ledger note appended successfully.")
+
+    return redirect('ticket_by_id', pk=pk)
+
+
 @login_required
 def caller_intake(request):
     """Customer Phone Intake workstation desk handles call logs, company filters, and contacts."""
@@ -453,3 +472,25 @@ def delete_ticket_manager_override(request, pk):
 
     messages.warning(request, f"Incident record '{ticket_title}' has been permanently purged from system logs.")
     return redirect('index')
+
+
+from .forms import TechProfileForm
+from .models import TechProfile
+
+
+@login_required
+def profile_edit(request):
+    """Secure settings workspace allowing technicians to update their phone parameters on the fly."""
+    profile, created = TechProfile.objects.get_or_create(user=request.user)
+
+    if request.method == 'POST':
+        form = TechProfileForm(request.POST, instance=request.user, profile=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Your technician profile settings have been updated successfully.")
+            return redirect('profile_edit')
+    else:
+        form = TechProfileForm(instance=request.user, profile=profile)
+
+    return render(request, 'ticketApp/profile_edit.html', {'form': form})
+

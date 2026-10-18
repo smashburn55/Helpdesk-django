@@ -141,27 +141,26 @@ class Ticket(models.Model):
         return self.title
 
 
-
-
-
 class Comment(models.Model):
-    # REMOVED the old tracking key and updated to match your live custom Postgres key
-    ticket = models.ForeignKey(
-        Ticket,
-        on_delete=models.CASCADE,
-        db_column='ticket_id',     # <-- CRITICAL: Forces it to link to your live table column name
-        related_name='comments'
-    )
-    author = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='comments'
-    )
+    ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, db_column='ticket_id', related_name='comments')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    # 🕵️‍♂️ NEW SECURITY TOGGLE: True if this is a private technician note, False if it is client-facing
+    is_internal = models.BooleanField(default=False)
+
     def __str__(self):
-        return f"Comment by {self.author.username} on ticket #{self.ticket_id}"
+        note_type = "INTERNAL ONLY" if self.is_internal else "CLIENT FACING"
+        return f"Comment by {self.author.username} ({note_type}) on ticket #{self.ticket_id}"
+
+class TechProfile(models.Model):
+    """Extends the default Django User record with custom technician phone data."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='tech_profile')
+    phone_number = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return f"Profile for @{self.user.username}"
 
 
 

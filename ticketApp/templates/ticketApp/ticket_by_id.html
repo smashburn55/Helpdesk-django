@@ -42,16 +42,29 @@
 
             <div class="comment-stream my-3">
                 {% for comment in comments %}
-                    <div class="p-3 mb-2 bg-white rounded border-start border-primary border-4 shadow-sm">
-                        <div class="d-flex justify-content-between mb-1">
-                            <strong class="text-primary small">{{ comment.author.username }}</strong>
-                            <small class="text-muted" style="font-size: 0.75rem;">{{ comment.created_at|date:"M d, H:i" }}</small>
-                        </div>
-                        <p class="mb-0 small text-dark" style="white-space: pre-wrap;">{{ comment.text }}</p>
-                    </div>
-                {% empty %}
-                    <p class="text-muted small italic my-3">No tracking updates recorded.</p>
-                {% endfor %}
+    <!-- 🕵️‍♂️ PRIVATE NOTES: Yellow warning theme box container if marked internal -->
+    {% if comment.is_internal %}
+        <div class="p-3 mb-2 rounded border-start border-warning border-4 shadow-sm" style="background-color: #fffdf0;">
+            <div class="d-flex justify-content-between mb-1">
+                <strong class="text-warning small">🔒 Internal Note: @{{ comment.author.username }}</strong>
+                <small class="text-muted" style="font-size: 0.75rem;">{{ comment.created_at|date:"M d, H:i" }}</small>
+            </div>
+            <p class="mb-0 small text-dark font-monospace" style="white-space: pre-wrap;">{{ comment.text }}</p>
+        </div>
+    {% else %}
+        <!-- 🌐 PUBLIC CLIENT NOTES: Your clean original blue card design layout -->
+        <div class="p-3 mb-2 bg-white rounded border-start border-primary border-4 shadow-sm">
+            <div class="d-flex justify-content-between mb-1">
+                <strong class="text-primary small">🌐 @{{ comment.author.username }}</strong>
+                <small class="text-muted" style="font-size: 0.75rem;">{{ comment.created_at|date:"M d, H:i" }}</small>
+            </div>
+            <p class="mb-0 small text-dark" style="white-space: pre-wrap;">{{ comment.text }}</p>
+        </div>
+    {% endif %}
+{% empty %}
+    <p class="text-muted small italic my-3">No tracking updates recorded.</p>
+{% endfor %}
+
             </div>
 
             {% if user.is_authenticated %}
