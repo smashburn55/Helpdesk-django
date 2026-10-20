@@ -43,13 +43,13 @@
     </div>
 
     <!-- ==================== HORIZONTAL NAVIGATION CONTROLS & ALERT BAR ==================== -->
-    <div class="container-fluid px-4 mb-4">
+    <div class="container-fluid px-2 mb-2">
         <div class="bg-white border p-2 rounded shadow-xs">
             <div class="d-flex align-items-center justify-content-center gap-2">
                 {% if user.is_authenticated %}
 
                     <!-- Action Link 1: The Primary High-Density Table Grid View -->
-                    <a href="{% url 'index' %}" class="btn btn-outline-secondary px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📋 Grid Desk</a>
+                    <a href="{% url 'index' %}" class="btn btn-outline-secondary px-1 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📋 Grid Desk</a>
 
                     <!-- Action Link 2: Customer Contact Phone Intake Workstation -->
                     <a href="{% url 'caller_intake' %}" class="btn btn-outline-info text-dark px-3 py-1 fw-bold shadow-sm" style="font-size: 0.8rem; min-width: 110px;">📞 Phone Intake</a>
@@ -72,7 +72,7 @@
                                 </span>
                             {% endif %}
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 mt-2" style="width: 260px; font-size: 0.8rem;">
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2 mt-2" style="width: 200px; font-size: 0.6rem;">
                             <li class="dropdown-header text-uppercase fw-bold text-dark border-bottom pb-1 mb-2">Live Compliance Desk</li>
                             <li class="p-1 d-flex justify-content-between"><span>SLA Critical</span><span class="badge {% if sla_breaches_count > 0 %}bg-danger{% else %}bg-light text-muted{% endif %}">{{ sla_breaches_count }} Overdue</span></li>
                             <li class="p-1 d-flex justify-content-between border-top mt-1 pt-2"><span>Internal Notices</span><span class="badge {% if unread_alerts_count > 0 %}bg-warning text-dark{% else %}bg-light text-muted{% endif %}">{{ unread_alerts_count }} New</span></li>

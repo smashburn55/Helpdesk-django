@@ -24,5 +24,8 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='index'), name='logout'),
 # Add this path line inside your urlpatterns list array inside ticketApp/urls.py
     path('profile/settings/', views.profile_edit, name='profile_edit'),
-    path('ticket/<int:pk>/comment/add/', views.add_comment, name='add_comment')
+    path('ticket/<int:pk>/comment/add/', views.add_comment, name='add_comment'),
+# Add this line cleanly inside your urlpatterns array list inside ticketApp/urls.py
+    path('api/get-contacts-by-company/', views.get_contacts_by_company_api, name='get_contacts_by_company_api'),
+
 ]

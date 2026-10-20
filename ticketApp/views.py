@@ -98,12 +98,44 @@ def ticket_by_id(request, pk):
             return redirect('ticket_by_id', pk=pk)
 
         # Check which form was submitted using a hidden HTML input name
+        # Check which form was submitted using a hidden HTML input name
+        # Check which form was submitted using a hidden HTML input name
+        # Check which form was submitted using a hidden HTML input name string
         if 'update_status' in request.POST:
             status_form = StatusUpdateForm(request.POST, instance=ticket)
             if status_form.is_valid():
+                # 1. Let Django save the standard properties (Status, Agent, Severity)
                 status_form.save()
-                messages.success(request, "Ticket updated successfully!")
+
+                # 🏢 2. DIRECT COMPANY UPDATE OVERRIDE
+                selected_company_id = request.POST.get('company')
+                ticket.company_id = int(selected_company_id) if selected_company_id else None
+
+                # 👤 3. SYSTEM-WIDE CONTACT VALUE OVERRIDE MATRIX
+                # Pulls the raw selection integer straight from the HTML input named 'select_contact'
+                raw_contact_input = request.POST.get('select_contact')
+
+                if raw_contact_input:
+                    contact_integer_id = int(raw_contact_input)
+
+                    # Safety Gate Loop: Check which property name your models.py uses and assign it directly
+                    if hasattr(ticket, 'crm_contact_id'):
+                        ticket.crm_contact_id = contact_integer_id
+                    elif hasattr(ticket, 'contact_id'):
+                        ticket.contact_id = contact_integer_id
+                else:
+                    if hasattr(ticket, 'crm_contact_id'):
+                        ticket.crm_contact_id = None
+                    elif hasattr(ticket, 'contact_id'):
+                        ticket.contact_id = None
+
+                ticket.save()  # Forces an absolute direct write straight into your database table row!
+                messages.success(request, "Ticket properties updated successfully!")
+                
                 return redirect('ticket_by_id', pk=pk)
+
+
+
         elif 'add_comment' in request.POST:
             comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
@@ -128,6 +160,28 @@ def ticket_by_id(request, pk):
 
 from django.shortcuts import render, get_object_or_404, redirect
 from .models import CompanyCRM, ContactCRM, Ticket
+
+from django.http import JsonResponse
+from .models import ContactCRM
+
+
+@login_required
+def get_contacts_by_company_api(request):
+    """Safe, read-only JSON endpoint that feeds the dropdown filter live on screen."""
+    company_id = request.GET.get('company_id')
+
+    if company_id:
+        # Pull only existing CRM contact profiles bound to this specific corporate file
+        contacts = ContactCRM.objects.filter(company_id=company_id).order_by('last_name')
+    else:
+        # Fallback layout: show independent profiles if no company is selected
+        contacts = ContactCRM.objects.filter(company__isnull=True).order_by('last_name')
+
+    # Translate database rows into a clean text matrix for your template script
+    contact_list = [
+        {'id': company_id, 'name': f"{c.first_name} {c.last_name}"} for c in contacts
+    ]
+    return JsonResponse({'contacts': contact_list})
 
 
 @login_required

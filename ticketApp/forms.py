@@ -68,9 +68,28 @@ class CommentForm(forms.ModelForm):
 
 # 3. TECHNICIAN METADATA PROPERTY MANAGEMENT FORM
 class StatusUpdateForm(forms.ModelForm):
+    """Handles updating ticket parameters from the detail sidebar panel."""
+
+    # Expose your alphabetical corporate accounts registry cleanly
+    company = forms.ModelChoiceField(
+        queryset=CompanyCRM.objects.all().order_by('company_name'),
+        required=False,
+        empty_label="-- Independent Client (No Corporate File) --",
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm'}),
+        label="Assigned Company File"
+    )
+    # 👤 NEW: INTERACTIVE CONTACT SELECTOR MATRIX
+    crm_contact = forms.ModelChoiceField(
+        queryset=ContactCRM.objects.all().order_by('last_name', 'first_name'),
+        required=False,
+        empty_label="-- Unknown / System Placeholder --",
+        widget=forms.Select(attrs={'class': 'form-select form-select-sm'}),
+        label="Assigned Customer Contact"
+    )
+
     class Meta:
         model = Ticket
-        fields = ['status', 'assignee', 'priority']
+        fields = ['status', 'assignee', 'priority', 'company', 'crm_contact']
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
             'assignee': forms.Select(attrs={'class': 'form-select'}),
