@@ -28,20 +28,20 @@
                 </div>
 
                 <!-- 👤 DIRECT HTML CONTACT SELECTOR MATRIX -->
-                <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Assigned Customer Contact</label>
-                            <!-- 👤 RESTORED SECURE CUSTOMER CONTACT PICKER -->
-        <div class="mb-3">
-            <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Assigned Customer Contact</label>
+                <!-- Contact selection -->
+<div class="mb-3">
+    <label class="form-label small fw-bold text-muted text-uppercase mb-0"
+           style="font-size: 0.65rem;">
+        Contact
+    </label>
 
-            <!-- FIXED: Restores Django's secure form tag which prevents data stripping on POST -->
-            {{ status_form.crm_contact }}
+    {{ status_form.crm_contact }}
 
-            <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">Link this ticket to a verified CRM contact profile.</small>
-        </div>
-
-                    <small class="text-muted d-block mt-1" style="font-size: 0.65rem;">Link this ticket to a verified CRM contact profile.</small>
-                </div>
+    <small class="text-muted d-block mt-1"
+           style="font-size: 0.65rem;">
+        Select the contact associated with this ticket.
+    </small>
+</div>
 
                 <div class="mb-3">
                     <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Issue Severity</label>
