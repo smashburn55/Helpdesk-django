@@ -1,11 +1,36 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_POST, require_GET
+import json
+
+from django.conf import settings
 from django.contrib import messages
-from django.db.models import Q
-from .models import Ticket, TicketStatus, Comment, ContactCRM
-from .forms import TicketForm, CommentForm, StatusUpdateForm, QuickContactForm
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.contrib.admin.views.decorators import staff_member_required
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.core.mail import send_mail
+from django.db.models import Q, Count
+from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404, redirect
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
+from django.views.decorators.http import require_POST, require_GET
+from django.db import transaction
+
+from .models import (
+    Ticket,
+    TicketStatus,
+    Comment,
+    ContactCRM,
+    CompanyCRM,
+    TechProfile,
+)
+
+from .forms import (
+    TicketForm,
+    CommentForm,
+    StatusUpdateForm,
+    QuickContactForm,
+    TechnicianCreationForm,
+    TechPasswordResetForm,
+    TechProfileForm,
+)
 
 @login_required
 @ensure_csrf_cookie
@@ -85,9 +110,6 @@ def create_ticket(request):
 
     return render(request, 'ticketApp/create_ticket.html', {'form': form})
 
-
-#from .forms import TicketForm, CommentForm, StatusUpdateForm
-
 def ticket_by_id(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
     comments = ticket.comments.all().order_by('created_at')
@@ -97,45 +119,13 @@ def ticket_by_id(request, pk):
             messages.error(request, "Authentication required.")
             return redirect('ticket_by_id', pk=pk)
 
-        # Check which form was submitted using a hidden HTML input name
-        # Check which form was submitted using a hidden HTML input name
-        # Check which form was submitted using a hidden HTML input name
         # Check which form was submitted using a hidden HTML input name string
         if 'update_status' in request.POST:
             status_form = StatusUpdateForm(request.POST, instance=ticket)
             if status_form.is_valid():
-                # 1. Let Django save the standard properties (Status, Agent, Severity)
                 status_form.save()
-
-                # 🏢 2. DIRECT COMPANY UPDATE OVERRIDE
-                selected_company_id = request.POST.get('company')
-                ticket.company_id = int(selected_company_id) if selected_company_id else None
-
-                # 👤 3. SYSTEM-WIDE CONTACT VALUE OVERRIDE MATRIX
-                # Pulls the raw selection integer straight from the HTML input named 'select_contact'
-                raw_contact_input = request.POST.get('select_contact')
-
-                if raw_contact_input:
-                    contact_integer_id = int(raw_contact_input)
-
-                    # Safety Gate Loop: Check which property name your models.py uses and assign it directly
-                    if hasattr(ticket, 'crm_contact_id'):
-                        ticket.crm_contact_id = contact_integer_id
-                    elif hasattr(ticket, 'contact_id'):
-                        ticket.contact_id = contact_integer_id
-                else:
-                    if hasattr(ticket, 'crm_contact_id'):
-                        ticket.crm_contact_id = None
-                    elif hasattr(ticket, 'contact_id'):
-                        ticket.contact_id = None
-
-                ticket.save()  # Forces an absolute direct write straight into your database table row!
-                messages.success(request, "Ticket properties updated successfully!")
-                
+                messages.success(request, "Ticket updated successfully!")
                 return redirect('ticket_by_id', pk=pk)
-
-
-
         elif 'add_comment' in request.POST:
             comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
@@ -158,13 +148,6 @@ def ticket_by_id(request, pk):
     }
     return render(request, 'ticketApp/ticket_by_id.html', context)
 
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import CompanyCRM, ContactCRM, Ticket
-
-from django.http import JsonResponse
-from .models import ContactCRM
-
-
 @login_required
 def get_contacts_by_company_api(request):
     """Safe, read-only JSON endpoint that feeds the dropdown filter live on screen."""
@@ -179,10 +162,9 @@ def get_contacts_by_company_api(request):
 
     # Translate database rows into a clean text matrix for your template script
     contact_list = [
-        {'id': company_id, 'name': f"{c.first_name} {c.last_name}"} for c in contacts
+        {'id': c.contact_id, 'name': f"{c.first_name} {c.last_name}"} for c in contacts
     ]
     return JsonResponse({'contacts': contact_list})
-
 
 @login_required
 def add_comment(request, pk):
@@ -200,7 +182,6 @@ def add_comment(request, pk):
             messages.success(request, "Communication ledger note appended successfully.")
 
     return redirect('ticket_by_id', pk=pk)
-
 
 @login_required
 def caller_intake(request):
@@ -260,10 +241,6 @@ def quick_add_contact(request):
         form = QuickContactForm()
     return render(request, 'ticketApp/quick_add_contact.html', {'form': form})
 
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-
 @csrf_exempt  # Allows secure cross-origin submissions from your main marketing site
 def web_intake_api(request):
     if request.method != 'POST':
@@ -314,11 +291,6 @@ def web_intake_api(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'Invalid JSON request structural framing.'}, status=400)
 
-
-from django.core.mail import send_mail
-from django.conf import settings
-
-
 def send_ticket_confirmation_email(ticket):
     """
     Automated transactional assistant that pulls a customer's email from
@@ -358,10 +330,6 @@ def send_ticket_confirmation_email(ticket):
     except Exception as e:
         print(f"SMTP DELIVERY EXCEPTION ERROR: {str(e)}")
 
-from django.db.models import Count
-from django.contrib.auth.models import User
-from .models import Ticket
-
 @login_required
 def helpdesk_analytics(request):
     # Ensure only staff or managers can view team metrics
@@ -392,11 +360,6 @@ def helpdesk_analytics(request):
         'tech_workloads': tech_workloads,
     }
     return render(request, 'ticketApp/analytics.html', context)
-
-
-from django.contrib.admin.views.decorators import staff_member_required
-from .forms import TechnicianCreationForm, TechPasswordResetForm
-
 
 @login_required
 @staff_member_required  # Security check: Only staff managers can access the roster tools
@@ -456,42 +419,34 @@ def toggle_tech_status(request, user_id):
 
     return redirect('roster_management')
 
-
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-
-
 @login_required
 @require_POST
 def claim_ticket_api(request, ticket_id):
-    """Background JSON endpoint allowing an active agent to instantly claim an unassigned case."""
-    ticket = get_object_or_404(Ticket, pk=ticket_id)
-    ticket.assignee = request.user
-    ticket.save()
-    return JsonResponse({'success': True, 'username': request.user.username})
-    return JsonResponse({'success': True, 'username': request.user.username})
-    return JsonResponse({'success': True, 'username': request.user.username})
-    # Safety Check: Prevent accidental overwriting if another agent claimed it first
-    #if ticket.assignee:
-    #    return JsonResponse({
-    #        'success': False,
-    #        'message': f"This instance has already been claimed by @{ticket.assignee.username}."
-    #    }, status=400)
+    """Assign an unclaimed ticket to the logged-in technician."""
 
-    # Assign the ticket to the active logged-in technician
-    ticket.assignee = request.user
+    with transaction.atomic():
+        ticket = get_object_or_404(
+            Ticket.objects.select_for_update(),
+            pk=ticket_id
+        )
 
-    # Automatically promote 'To Do' tickets to 'In Progress' upon being claimed
-    if ticket.status == 'TODO':
-        ticket.status = 'PROG'
+        if ticket.assignee_id is not None:
+            return JsonResponse({
+                'success': False,
+                'message': 'This ticket is already assigned.'
+            }, status=409)
 
-    ticket.save()
+        ticket.assignee = request.user
+
+        if ticket.status == 'TODO':
+            ticket.status = 'PROG'
+
+        ticket.save()
 
     return JsonResponse({
         'success': True,
         'username': request.user.username
     })
-
 
 @login_required
 def company_profile_ledger(request, company_id):
@@ -526,11 +481,6 @@ def delete_ticket_manager_override(request, pk):
 
     messages.warning(request, f"Incident record '{ticket_title}' has been permanently purged from system logs.")
     return redirect('index')
-
-
-from .forms import TechProfileForm
-from .models import TechProfile
-
 
 @login_required
 def profile_edit(request):

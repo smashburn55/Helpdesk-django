@@ -17,13 +17,13 @@
                 </div>
 
                 <div class="mb-2">
-                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Assigned Staff Agent</label>
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Assigned Technician</label>
                     {{ status_form.assignee }}
                 </div>
 
                 <!-- 🏢 MASTER COMPANY DROPDOWN SELECTOR -->
                 <div class="mb-2">
-                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Assigned Company File</label>
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Company</label>
                     {{ status_form.company }}
                 </div>
 
@@ -44,11 +44,11 @@
 </div>
 
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Issue Severity</label>
+                    <label class="form-label small fw-bold text-muted text-uppercase mb-0" style="font-size: 0.65rem;">Priority</label>
                     {{ status_form.priority }}
                 </div>
 
-                <button type="submit" class="btn btn-sm btn-warning w-100 fw-bold shadow-sm mb-2">Update Parameters</button>
+                <button type="submit" class="btn btn-sm btn-warning w-100 fw-bold shadow-sm mb-2">Save Changes</button>
             </form>
 
             <a href="{% url 'index' %}" class="btn btn-sm btn-outline-secondary w-100 fw-bold mt-2">Back to Dashboard</a>
@@ -81,7 +81,7 @@
             <div class="bg-light p-3 rounded border mb-4 font-monospace small" style="white-space: pre-wrap;">{{ ticket.description }}</div>
 
             <!-- 💬 ACTIVITY TIMELINE TIMELINE LOOP -->
-            <h5 class="border-bottom pb-2 fw-bold text-dark font-monospace">Activity Timeline History</h5>
+            <h5 class="border-bottom pb-2 fw-bold text-dark font-monospace">Ticket Activity</h5>
             <div class="comment-stream my-3">
                 {% for comment in comments %}
                     {% if comment.is_internal %}
@@ -111,7 +111,7 @@
                     <form method="POST">
                         {% csrf_token %}
                         {{ comment_form.as_p }}
-                        <button type="submit" name="add_comment" class="btn btn-primary btn-sm">Publish Message</button>
+                        <button type="submit" name="add_comment" class="btn btn-primary btn-sm">Add Message</button>
                     </form>
                 </div>
             {% endif %}
@@ -128,7 +128,7 @@
 
         {% if ticket.company or ticket.crm_contact %}
         <div class="card bg-primary text-white p-3 border-0 shadow-sm">
-            <h6 class="text-uppercase fw-bold font-monospace small mb-3" style="letter-spacing: 1px;">Account Directory File</h6>
+            <h6 class="text-uppercase fw-bold font-monospace small mb-3" style="letter-spacing: 1px;">Contact Information</h6>
             <div class="small mb-1"><strong>Caller Name:</strong> {{ ticket.crm_contact.first_name }} {{ ticket.crm_contact.last_name|default:"External" }}</div>
             <div class="small mb-1"><strong>Email:</strong> {{ ticket.crm_contact.email|default:"N/A" }}</div>
             <div class="small mb-3"><strong>Direct Line:</strong> {{ ticket.crm_contact.phone|default:"N/A" }}</div>

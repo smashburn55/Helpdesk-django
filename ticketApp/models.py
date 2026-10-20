@@ -93,7 +93,7 @@ class Ticket(models.Model):
 
     PRIORITY_CHOICES = [
         ('LOW', 'Low / Routine'),
-        ('MED', 'Medium Bug'),
+        ('MED', 'Medium'),
         ('HIGH', 'High Impact'),
         ('CRIT', 'Critical Outage'),
     ]

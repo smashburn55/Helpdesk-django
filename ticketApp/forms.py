@@ -1,15 +1,8 @@
 from django import forms
-from .models import Ticket, ContactCRM, CompanyCRM, Comment
-
+from django.contrib.auth.models import User
+from .models import Ticket, ContactCRM, CompanyCRM, Comment, TechProfile
 
 # 1. NEW TICKET INTAKE FORM
-from django import forms
-from .models import Ticket, CompanyCRM
-
-from django import forms
-from .models import Ticket, CompanyCRM
-from django.contrib.auth.models import User  # <-- Ensure the User model is imported
-
 
 class TicketForm(forms.ModelForm):
     """Upgraded Ticket Form featuring dynamic editable corporate and technician selectors."""
@@ -46,7 +39,6 @@ class TicketForm(forms.ModelForm):
 
 
 # 2. INTERACTIVE DISCUSSION COMMENT FORM
-from .models import Comment
 
 class CommentForm(forms.ModelForm):
     """Upgraded comment form supporting private internal troubleshooting logs."""
@@ -109,7 +101,6 @@ class QuickContactForm(forms.Form):
         empty_label="-- Independent / No Company --",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-from django.contrib.auth.models import User
 
 class TechnicianCreationForm(forms.ModelForm):
     """Secure operational form to initialize a fresh helpdesk agent row with strict criteria."""
@@ -160,9 +151,6 @@ class TechPasswordResetForm(forms.Form):
         widget=forms.PasswordInput(attrs={'class': 'form-control form-control-sm', 'placeholder': 'Type new secure password...'}),
         label="New Overwrite Password"
     )
-
-from django.contrib.auth.models import User
-from .models import TechProfile
 
 class TechProfileForm(forms.ModelForm):
     """Form to handle core technician data and phone information concurrently."""
