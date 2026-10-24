@@ -7,11 +7,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.db.models import Q, Count
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.db import transaction
+from django.urls import reverse
 
 from .models import (
     Ticket,
@@ -300,7 +301,6 @@ def send_ticket_confirmation_email(ticket):
         return  # Abort safely if caller has no email recorded in CRM
 
     customer_email = ticket.crm_contact.email
-    customer_name = f"{ticket.crm_contact.first_name} {ticket.crm_contact.last_name}"
 
     subject = f"[Ticket #{ticket.ticket_id}] Support Request Received: {ticket.title}"
 
@@ -362,12 +362,60 @@ def helpdesk_analytics(request):
     return render(request, 'ticketApp/analytics.html', context)
 
 @login_required
-@staff_member_required  # Security check: Only staff managers can access the roster tools
 def roster_management(request):
     """Operational Hub to display, add, and toggle helpdesk technician profiles."""
     techs = User.objects.all().order_by('username')
+    selected_tech = None
+
+    tech_id = request.GET.get('tech_id')
+    if tech_id:
+        selected_tech = get_object_or_404(User, pk=tech_id)
+
+    edit_mode = (
+            selected_tech is not None
+            and request.GET.get('mode') == 'edit'
+    )
+    edit_form = None
+
+    if selected_tech:
+        profile, created = TechProfile.objects.get_or_create(
+            user=selected_tech
+        )
+
+        if request.method == 'POST' and 'edit_tech' in request.POST:
+            if not request.user.is_staff:
+                return HttpResponseForbidden(
+                    "You do not have permission to edit technician accounts."
+                )
+            if request.POST.get('edit_tech') != str(selected_tech.pk):
+                return HttpResponseBadRequest("Technician ID mismatch.")
+
+            edit_form = TechProfileForm(
+                request.POST,
+                instance=selected_tech,
+                profile=profile
+            )
+
+            if edit_form.is_valid():
+                edit_form.save()
+                messages.success(request, "Technician information saved.")
+                return redirect(
+                    f"{reverse('roster_management')}?tech_id={selected_tech.pk}"
+                )
+
+            edit_mode = True
+
+        else:
+            edit_form = TechProfileForm(
+                instance=selected_tech,
+                profile=profile
+            )
 
     if request.method == 'POST' and 'add_tech' in request.POST:
+        if not request.user.is_staff:
+            return HttpResponseForbidden(
+                "You do not have permission to create technician accounts."
+            )
         create_form = TechnicianCreationForm(request.POST)
         if create_form.is_valid():
             create_form.save()
@@ -380,7 +428,10 @@ def roster_management(request):
     context = {
         'techs': techs,
         'create_form': create_form,
-        'reset_form': TechPasswordResetForm()
+        'reset_form': TechPasswordResetForm(),
+        'selected_tech': selected_tech,
+        'edit_form': edit_form,
+        'edit_mode': edit_mode,
     }
     return render(request, 'ticketApp/roster.html', context)
 
@@ -405,6 +456,7 @@ def force_reset_password(request, user_id):
 
 @login_required
 @staff_member_required
+@require_POST
 def toggle_tech_status(request, user_id):
     """Instantly revokes or reinstates server access without deleting historical log connections."""
     tech = get_object_or_404(User, pk=user_id)

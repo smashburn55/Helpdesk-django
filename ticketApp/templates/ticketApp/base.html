@@ -36,8 +36,15 @@
                 Agent: <a href="{% url 'profile_edit' %}" class="ms-1 text-primary fw-bold text-decoration-none">@{{ request.user.username }}</a>
             </span>
             {% if request.user.is_authenticated %}
-                <a href="{% url 'logout' %}" class="btn btn-xs btn-outline-secondary font-monospace fw-bold bg-white" style="font-size: 0.65rem; padding: 2px 8px;">EXIT</a>
-            {% endif %}
+    <form method="POST" action="{% url 'logout' %}" class="d-inline m-0">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-xs btn-outline-secondary font-monospace fw-bold bg-white"
+                style="font-size: 0.65rem; padding: 2px 8px;">
+            EXIT
+        </button>
+    </form>
+{% endif %}
         </div>
 
     </div>

@@ -187,9 +187,15 @@
 
                 // Trigger network updates only when the dispatcher changes the parent company selection box
                 companySelect.addEventListener('change', function() {
-                    executeCascadeUpdate(this.value);
-                });
+    // A different company requires a new contact selection.
+    currentActiveContactId = '';
 
+    // Clear the old selection immediately.
+    contactSelect.innerHTML =
+        '<option value="">-- Select Contact --</option>';
+
+    executeCascadeUpdate(this.value);
+});
                 // Initialize clean field alignment mappings on startup load pass
                 if (companySelect.value) {
                     executeCascadeUpdate(companySelect.value);

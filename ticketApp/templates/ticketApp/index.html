@@ -193,7 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .then(function(res) {
-            alert("Server responded with network code: " + res.status);
             return res.json();
         })
         .then(function(data) {
