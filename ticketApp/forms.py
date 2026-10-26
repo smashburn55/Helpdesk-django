@@ -85,7 +85,7 @@ class StatusUpdateForm(forms.ModelForm):
         widgets = {
             'status': forms.Select(attrs={'class': 'form-select'}),
             'assignee': forms.Select(attrs={'class': 'form-select'}),
-            'priority': forms.Select(attrs={'class ': 'form-select form-select-sm'}), # <-- Clean dropdown style
+            'priority': forms.Select(attrs={'class': 'form-select form-select-sm'}), # <-- Clean dropdown style
 
         }
 

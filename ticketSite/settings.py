@@ -1,17 +1,30 @@
 from pathlib import Path
+import os
+
+def load_env_file(path):
+    """Load local environment settings without overriding existing variables."""
+    if not path.is_file():
+        return
+
+    for line in path.read_text().splitlines():
+        line = line.strip()
+
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_env_file(Path(__file__).resolve().parent.parent / ".env")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-o5h6%+fzkr#d3(%b034y+aeh0q&t7_i!4b8+rk73io88)4(h3^"
-
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
-ALLOWED_HOSTS = ['://mashburndatasystems.com', '209.97.146.203']
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -59,47 +72,33 @@ WSGI_APPLICATION = "ticketSite.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-import socket
-import os
-from pathlib import Path
-
 # Automatically detect the hostname of the machine executing the code
-hostname = socket.gethostname().lower()
+# Configuration is selected explicitly through environment variables.
+# Mac and DigitalOcean each have their own private .env file.
 
-if "gametech" in hostname or "localhost" in hostname:
-    # =========================================================================
-    # 💻 LOCAL LAPTOP DEVELOPMENT PROFILE
-    # =========================================================================
-    DEBUG = True
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+DJANGO_ENV = os.environ.get("DJANGO_ENV", "development")
 
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'contact_pro_demo',  # Your local laptop database name
-            'USER': 'postgres',  # Your local laptop user
-            'PASSWORD': 'postgres',  # Your local laptop password
-            'HOST': '127.0.0.1',
-            'PORT': '5432',
-        }
-    }
+DEBUG = os.environ.get("DJANGO_DEBUG", "False").lower() == "true"
+
+if DJANGO_ENV == "production":
+    ALLOWED_HOSTS = [
+        "mashburndatasystems.com",
+        "www.mashburndatasystems.com",
+        "209.97.146.203",
+    ]
 else:
-    # =========================================================================
-    # ☁️ DIGITALOCEAN LIVE PRODUCTION SECURITY INSTANCE PROFILE
-    # =========================================================================
-    DEBUG = True
-    # ALLOWED_HOSTS = ['://mashburndatasystems.com', '209.97.146.203']
+    ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': 'contact_pro_demo',
-            'USER': 'postgres',
-            'PASSWORD': 'postgres',  # Secure cloud password
-            'HOST': '127.0.0.1',  # Forces local socket bindings inside the droplet
-            'PORT': '5432',
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ["DJANGO_DB_NAME"],
+        "USER": os.environ["DJANGO_DB_USER"],
+        "PASSWORD": os.environ["DJANGO_DB_PASSWORD"],
+        "HOST": os.environ["DJANGO_DB_HOST"],
+        "PORT": os.environ["DJANGO_DB_PORT"],
     }
+}
 
 # Keep the rest of your settings (STATIC_URL, STATIC_ROOT, etc.) exactly the same below!
 

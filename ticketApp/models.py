@@ -78,7 +78,7 @@ class Ticket(models.Model):
     crm_contact = models.ForeignKey(
         ContactCRM,
         on_delete=models.CASCADE,
-        db_column='contact_id',
+        db_column='crm_contact_id',
         null=True,
         blank=True,
         related_name='tickets'

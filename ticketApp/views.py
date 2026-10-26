@@ -13,6 +13,9 @@ from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from django.views.decorators.http import require_POST, require_GET
 from django.db import transaction
 from django.urls import reverse
+from django.core import signing
+from django.db import transaction
+from django.core.signing import BadSignature, SignatureExpired
 
 from .models import (
     Ticket,
@@ -113,6 +116,16 @@ def create_ticket(request):
 
 def ticket_by_id(request, pk):
     ticket = get_object_or_404(Ticket, pk=pk)
+
+    original_properties = signing.dumps({
+        'ticket_id': ticket.pk,
+        'status': ticket.status,
+        'assignee': ticket.assignee_id,
+        'priority': ticket.priority,
+        'company': ticket.company_id,
+        'crm_contact': ticket.crm_contact_id,
+    }, salt='ticket-properties')
+
     comments = ticket.comments.all().order_by('created_at')
 
     if request.method == 'POST':
@@ -124,9 +137,84 @@ def ticket_by_id(request, pk):
         if 'update_status' in request.POST:
             status_form = StatusUpdateForm(request.POST, instance=ticket)
             if status_form.is_valid():
-                status_form.save()
+                field_names = (
+                    "status", "assignee", "priority", "company", "crm_contact"
+                )
+                fk_fields = {"assignee", "company", "crm_contact"}
+
+                try:
+                    original = signing.loads(
+                        request.POST.get("original_properties", ""),
+                        salt="ticket-properties",
+                        max_age=12 * 60 * 60,
+                    )
+                except (BadSignature, SignatureExpired):
+                    messages.error(
+                        request,
+                        "Ticket form expired or is invalid. Refresh and try again."
+                    )
+                    return redirect("ticket_by_id", pk=pk)
+
+                if original.get("ticket_id") != ticket.pk:
+                    messages.error(request, "Ticket form does not match this ticket.")
+                    return redirect("ticket_by_id", pk=pk)
+
+                # ModelChoiceField values are model objects, so compare their IDs.
+                submitted = {}
+                for field in field_names:
+                    value = status_form.cleaned_data[field]
+                    submitted[field] = (
+                        value.pk if field in fk_fields and value is not None
+                        else value
+                    )
+
+                changed = {
+                    field: value
+                    for field, value in submitted.items()
+                    if value != original[field]
+                }
+
+                with transaction.atomic():
+                    current = Ticket.objects.select_for_update().get(pk=pk)
+
+                    conflicts = []
+                    for field in changed:
+                        current_value = (
+                            getattr(current, f"{field}_id")
+                            if field in fk_fields
+                            else getattr(current, field)
+                        )
+
+                        if current_value != original[field]:
+                            conflicts.append(field)
+
+                    if not conflicts:
+                        for field, value in changed.items():
+                            attribute = (
+                                f"{field}_id" if field in fk_fields else field
+                            )
+                            setattr(current, attribute, value)
+
+                        if changed:
+                            current.save(
+                                update_fields=[
+                                    f"{field}_id" if field in fk_fields else field
+                                    for field in changed
+                                ]
+                            )
+
+                if conflicts:
+                    messages.error(
+                        request,
+                        "CONFLICT — Your changes were NOT saved! "
+                        "Another technician changed: "
+                        + ", ".join(conflicts)
+                        + ". Refresh the ticket and review the latest values."
+                    )
+                    return redirect("ticket_by_id", pk=pk)
+
                 messages.success(request, "Ticket updated successfully!")
-                return redirect('ticket_by_id', pk=pk)
+                return redirect("ticket_by_id", pk=pk)
         elif 'add_comment' in request.POST:
             comment_form = CommentForm(request.POST)
             if comment_form.is_valid():
@@ -137,6 +225,8 @@ def ticket_by_id(request, pk):
                 messages.success(request, "Comment added!")
                 return redirect('ticket_by_id', pk=pk)
 
+
+
     # Provide blank/prefilled forms on GET request
     status_form = StatusUpdateForm(instance=ticket)
     comment_form = CommentForm()
@@ -145,7 +235,8 @@ def ticket_by_id(request, pk):
         'ticket': ticket,
         'comments': comments,
         'status_form': status_form,
-        'comment_form': comment_form
+        'comment_form': comment_form,
+        'original_properties': original_properties,
     }
     return render(request, 'ticketApp/ticket_by_id.html', context)
 
